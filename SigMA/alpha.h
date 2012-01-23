@@ -17,19 +17,19 @@
 
 
 #ifdef PROTEIN
-  const int ALPHABET_SIZE=21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
-  const int GAP=21;
+  const int ALPHABET_SIZE = 21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
+  const int GAP = 21;
 #include "protmat.h"
 
 #else
-  const int ALPHABET_SIZE=5;     // A=1, C=2, G=3, T=4, gap=5
-  const int GAP=5;
+  const int ALPHABET_SIZE = 5;     // A=1, C=2, G=3, T=4, gap=5
+  const int GAP = 5;
 #endif
 
 
-const int RANDOM=0;
-const int NON_ORTHO=100;
-float back[ALPHABET_SIZE+1];
+const int RANDOM = 0;
+const int NON_ORTHO = 100;
+float back[ALPHABET_SIZE + 1];
 
 
 

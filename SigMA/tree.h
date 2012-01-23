@@ -21,10 +21,7 @@
 using namespace std;
 using namespace __gnu_cxx;
 
-
-
 class Tree {
-
  public:
   double left_branchlength;
   double right_branchlength;
@@ -33,7 +30,7 @@ class Tree {
   Tree* right_subtree;
   Tree* parent;
 
-  double prob[ALPHABET_SIZE+1];
+  double prob[ALPHABET_SIZE + 1];
   
   int is_leaf_num;
   int leaf_startnum;

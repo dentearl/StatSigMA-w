@@ -85,7 +85,8 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
           score_dist[i] += double(PSEUDOCOUNT_NORMALISATION)/(blocks.chain[0]->length*(max_score-min_score));
         */
 #ifdef DEBUG
-        cout << "# Computing sequence specific scores max(N^2," << TOTAL_NUM_TUPLES << ") where N=" << blocks.chain[0]->length << " (again based on random sampling)\n";
+        cout << "# Computing sequence specific scores max(N^2," << globalOptions.TOTAL_NUM_TUPLES 
+             << ") where N=" << blocks.chain[0]->length << " (again based on random sampling)\n";
 #endif
     
         int bl1=0;
@@ -120,10 +121,10 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
 #endif
 
         if ((good1 > 0) && (good2 > 0)) {      
-            for (int tp=0; tp<TOTAL_NUM_TUPLES; tp++) {
+            for (int tp = 0; tp < globalOptions.TOTAL_NUM_TUPLES; tp++) {
                 // random choose a tuple from good_tuple1 and good_tuple2
-                int goodID1 = (int)(rand() / (((double)RAND_MAX+1) / good1));
-                int goodID2 = (int)(rand() / (((double)RAND_MAX+1) / good2));
+                int goodID1 = (int)(rand() / (((double)RAND_MAX + 1) / good1));
+                int goodID2 = (int)(rand() / (((double)RAND_MAX + 1) / good2));
                 int l1 = good_tuple1[goodID1];
                 int l2 = good_tuple2[goodID2];
 
@@ -355,12 +356,12 @@ void scan_alignFile(char* mafFile) {
         else {
             char* a;
             if (buffer[0]=='s') {
-                // Checking for human                                                   
-                bool is_human=false;
-                if (strncmp(buffer+2,REF_SPECIES,strlen(REF_SPECIES))==0)
-                    is_human=true;
+                // Checking for reference
+                bool is_reference = false;
+                if (strncmp(buffer+2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0)
+                    is_reference = true;
 
-                if (is_human) {
+                if (is_reference) {
                     a = strtok(buffer," ");
                     a = strtok(NULL," ");
                     a = strtok(NULL," ");
@@ -408,22 +409,23 @@ double compute_pvalue_branch(Tree* node,Tree* parent,blocks_type& blocks,char* f
 
     //   compute_branch_parameters(node,parent,blocks,K,lambda,H);
     srand(time(NULL));
-    double K_arr[TOTAL_ITERATE_PARAM];
-    double lambda_arr[TOTAL_ITERATE_PARAM];
-    double H_arr[TOTAL_ITERATE_PARAM];
+    double *K_arr = new double[globalOptions.TOTAL_ITERATE_PARAM];
+    double *lambda_arr = new double[globalOptions.TOTAL_ITERATE_PARAM];
+    double *H_arr = new double[globalOptions.TOTAL_ITERATE_PARAM];
     blocks_type* blocks_param = new blocks_type;
     ifstream ifs1(filename);
     // int runs = 0;
   
-    float rate = ALIGN_LEN / (float)TOTAL_ITERATE_PARAM;
+    float rate = ALIGN_LEN / (float)globalOptions.TOTAL_ITERATE_PARAM;
 
 #ifdef DEBUG
-    cout<<"align length "<<ALIGN_LEN<<endl;
+    cout << "align length " << ALIGN_LEN << endl;
 #endif
 
     int sim_count = 0;
     int block_count = 0;
-    while ((blocks_param->read_single_from_maf(ifs1))&&(sim_count<TOTAL_ITERATE_PARAM)) {
+    while ((blocks_param->read_single_from_maf(ifs1)) 
+           && (sim_count < globalOptions.TOTAL_ITERATE_PARAM)) {
         int currBlockSize = blocks_param->chain[0]->length;
         int currRepNum = (int)(currBlockSize / rate);      
         // if failures, need try more times
@@ -463,14 +465,14 @@ double compute_pvalue_branch(Tree* node,Tree* parent,blocks_type& blocks,char* f
     cout << "# number of sets of parameter computed= " << sim_count << endl;
 
 
-    int cur_seg=0;
+    int cur_seg = 0;
 
     ifstream ifs(filename);
-    pair<int,int> limit[MAX_SEGMENTS];
-    pair<double,double> score_left_right[MAX_SEGMENTS];
-    int count=0;
+    pair<int, int> *limit = new pair<int, int>[globalOptions.MAX_SEGMENTS];
+    pair<double, double> *score_left_right = new pair<double, double>[globalOptions.MAX_SEGMENTS];
+    int count = 0;
   
-    while (blocks.read_single_from_maf(ifs)&&(cur_seg<max_seg)) {
+    while (blocks.read_single_from_maf(ifs) && (cur_seg < max_seg)) {
     
         int all_good_segments=0;
         int block_good_segments=0;
@@ -534,11 +536,11 @@ double compute_pvalue_branch(Tree* node,Tree* parent,blocks_type& blocks,char* f
                     if ((score_left_right[all_good_segments+i].first < cur_score-score)&&(i>max_j))
                         max_j=i;
                 if ((max_j==-1)||(score_left_right[all_good_segments+max_j].second >= cur_score)) {
-                    score_left_right[all_good_segments+block_good_segments].first = cur_score-score;
-                    score_left_right[all_good_segments+block_good_segments].second = cur_score;
-                    limit[all_good_segments+block_good_segments].first = l;
-                    limit[all_good_segments+block_good_segments].second = l;
-                    if (block_good_segments+all_good_segments<MAX_SEGMENTS-1) {
+                    score_left_right[all_good_segments + block_good_segments].first = cur_score-score;
+                    score_left_right[all_good_segments + block_good_segments].second = cur_score;
+                    limit[all_good_segments + block_good_segments].first = l;
+                    limit[all_good_segments + block_good_segments].second = l;
+                    if (block_good_segments + all_good_segments < globalOptions.MAX_SEGMENTS-1) {
                         block_good_segments++;
                         /*
                           #ifdef DEBUG
@@ -1085,21 +1087,21 @@ void compute_pvalue(Tree* node, blocks_type& blocks, double* branch_pvalue,
         if (node == root) {
             branch_ptr[branch_num] = ll;
             if (branch_num == doit)
-                branch_pvalue[branch_num++]  = compute_pvalue_branch(ll, node, blocks, filename);
+                branch_pvalue[branch_num++] = compute_pvalue_branch(ll, node, blocks, filename);
             else
-                branch_pvalue[branch_num++]  = 0;
+                branch_pvalue[branch_num++] = 0;
         }else{
             branch_ptr[branch_num] = ll;
             if (branch_num == doit)
-                branch_pvalue[branch_num++]  = compute_pvalue_branch(ll, node, blocks, filename);
+                branch_pvalue[branch_num++] = compute_pvalue_branch(ll, node, blocks, filename);
             else
-                branch_pvalue[branch_num++]  = 0;
+                branch_pvalue[branch_num++] = 0;
 
             branch_ptr[branch_num] = rr;
             if (branch_num == doit)
-                branch_pvalue[branch_num++]  = compute_pvalue_branch(rr, node, blocks, filename);
+                branch_pvalue[branch_num++] = compute_pvalue_branch(rr, node, blocks, filename);
             else
-                branch_pvalue[branch_num++]  = 0;
+                branch_pvalue[branch_num++] = 0;
         }
         if (ll->is_leaf_num < 0) compute_pvalue(ll, blocks, branch_pvalue, branch_num, 
                                                 branch_ptr, doit, filename);

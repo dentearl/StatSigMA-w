@@ -164,15 +164,15 @@ void generate_and_read_newick_tree() {
 
     int pos = 0;
     species_num = 0;
-    root = read_tree(PHYLOGENY, species_num, pos);
+    root = read_tree(globalOptions.PHYLOGENY, species_num, pos);
 }
 
 void read_multi_pv(char* filename) {
-    multi_pv = new double*[MAX_SEGMENTS + 1];
-    for (int i = 0; i < MAX_SEGMENTS + 1; i++)
+    multi_pv = new double*[globalOptions.MAX_SEGMENTS + 1];
+    for (int i = 0; i < globalOptions.MAX_SEGMENTS + 1; i++)
         multi_pv[i] = new double[int(MAX_TOTAL_SCORE - MIN_TOTAL_SCORE + 1)];
 
-    for (int i = 0; i < (MAX_SEGMENTS + 1); i++)
+    for (int i = 0; i < (globalOptions.MAX_SEGMENTS + 1); i++)
         for (int j = 0; j < (MAX_TOTAL_SCORE - MIN_TOTAL_SCORE + 1); j++)
             multi_pv[i][j]=-1;
   
@@ -187,7 +187,7 @@ void read_multi_pv(char* filename) {
     }
     while (ifs) {
         ifs >> a >> b >> c;
-        if ((a <= MAX_SEGMENTS) && (b <= MAX_TOTAL_SCORE) && (b >= MIN_TOTAL_SCORE)) {
+        if ((a <= globalOptions.MAX_SEGMENTS) && (b <= MAX_TOTAL_SCORE) && (b >= MIN_TOTAL_SCORE)) {
             //      if (b<0.5) c=1; 
             multi_pv[a][b - MIN_TOTAL_SCORE] = c;
         }
@@ -240,7 +240,8 @@ void usage(void)
             "Notice the output file has a suffix \"6_0.01.out\".\n");
 
     fprintf(stderr, "\nOPTIONS\n");
-    fprintf(stderr, "   --phylogeny       input phylogeny default = %s\n", globalOptions.PHYLOGENY);
+    fprintf(stderr, "   --phylogeny       input phylogeny in newick format default = %s\n", 
+            globalOptions.PHYLOGENY);
     fprintf(stderr, "   --refSpecies      reference species default = %s\n", globalOptions.REF_SPECIES);
     fprintf(stderr, "   --maxBlockSize    maximum total size of contiguous alignment blocks allowed.\n" 
             "                     If the length of one alignment block is larger than value\n"
@@ -319,8 +320,8 @@ void parseArgs(int argc, char **argv)
             break;
         default:
             break;
-            }
-            opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
+        }
+        opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
         // globalOptions.inputFiles = argv + optind;
         // globalOptions.numInputFiles = argc - optind;
     }

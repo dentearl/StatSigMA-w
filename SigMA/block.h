@@ -133,22 +133,22 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
                 int sp = name2species(buffer + 2);
                 success = 1;
                 if (sp >= 0) {
-                    char* str=strtok(buffer," ");
+                    char* str = strtok(buffer," ");
                     str=strtok(NULL," ");
                     str=strtok(NULL," ");
-                    int coord=atoi(str);
-                    if (strncmp(buffer+2,REF_SPECIES,2)==0) {
-                        seq2->start=coord;
-                        seq2->human_ref=sp;
+                    int coord = atoi(str);
+                    if (strncmp(buffer + 2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0) {
+                        seq2->start = coord;
+                        seq2->human_ref = sp;
                     }
                     str=strtok(NULL," ");
                     str=strtok(NULL," ");
                     str=strtok(NULL," ");
                     str=strtok(NULL," ");
                     int len = strlen(str);
-                    for (int m=0;m<len;m++)
-                        seq2->block[m][sp]=alpha2int(toupper(str[m]));
-                    seq2->length=len;
+                    for (int m = 0; m < len; m++)
+                        seq2->block[m][sp] = alpha2int(toupper(str[m]));
+                    seq2->length = len;
                 }
             }
             buffer[0]='\0';

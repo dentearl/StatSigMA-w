@@ -1,0 +1,104 @@
+I. SigMA
+
+1) Function:
+   Given a branch of the phylogenetic tree and a branch multiplier, SigMA identifies alignment segments w.r.t. the given branch and assigns a p-value to each segment.
+
+   In order to perform the downstream procedure of StatSigMAw, SigMA should be run on the combinations of ALL possible branches of the phylogenetic tree and THREE branch multipliers (0.01, 1 and 100).
+
+
+2) Usage:
+   SigMA <maf file> <branch index> <branch multiplier>
+   
+   a) <maf file>: the multiple sequence alignment in maf format.
+
+   b) <branch index>: the index of one branch of the phylogenetic tree corresponding to the alignment. 
+
+   c) <branch multiplier>: the multiplier of branch length of the phylogenetic tree.
+ 
+   NOTICE: We need to run SigMA on the combinations of ALL possible branches of the tree and THREE branch multipliers (0.01, 1 and 100). For example, the default tree provided in our code has 53 branches, and the branch index ranges between 0-52.  We will then run SigMA 53X3 times.
+
+
+3) Output:
+   The program generates the output to stdout, which includes information about identifed alignment segments, such as p-values.
+
+   The stdout should be REDIRECTED to a file whose SUFFIX has to be "<branch index>_<branch multiplier>.out".
+
+
+4) Example:
+   SigMA  myAlign.maf  6  0.01  >  myOutDir/myPrefix.6_0.01.out 
+
+   We show an example of running SigMA on branch #6 and multipler 0.01. Notice the output file has a suffix "6_0.01.out".
+
+
+
+II. Combine
+
+1) Function:
+   Given the directory where the SigMA output files are located and the prefix of SigMA output files, the alignment segments identified by SigMA for all branches in the phylogenetic tree and for all three branch multipliers are assessed. The program finally identifies suspiciously aligned regions with respect to each branch.
+
+   NOTICE: This program assumes that SigMA has been run on the combinations of ALL possible branches of the phylogenetic tree and THREE branch multipliers (0.01, 1 and 100).
+
+
+2) Usage:
+   combine <maf file> <SigMA output dir> <SigMA output prefix>
+
+   a) <maf file>: the multiple sequence alignment in maf format.
+
+   b) <SigMA output dir>: the directory where the SigMA output files are located.
+
+   c) <SigMA output prefix>: the prefix of SigMA output file names.
+
+
+3) Output:
+   The program generates the output to stdout. The output consists of three parts:
+   a) Regions that are well aligned with respect to ALL branches. The format of this part of output is:
+      - my_good_region (simply a flag) 
+      - start position of this region (in the alignment coordinate, i.e. which column in the alignment is this position)
+      - length of this region
+      - chromosome
+      - start position 
+      - end position
+
+      The last three items show the genomic coordinates of the reference species for this region.
+
+   b) Regions that are suspiciously aligned w.r.t. a branch. The format of this part of output is:
+      - my_bad_region (simply a flag) 
+      - start position of this region (in the alignment coordinate, i.e. which column in the alignment is this position)
+      - branch index (the region is suspiciously aligned with respect to this particular branch)
+      - length of this region
+      - chromosome
+      - start position 
+      - end position
+
+      Again, the last three items show the genomic coordinates of the reference species for this region.
+
+      Note: For regions that are suspiciously aligned with respect to a branch incident on a leaf (i.e., a species), you can read them as regions where that species is suspiciously aligned to the other species.
+
+
+   c) Statistics for suspiciously-aligned regions. The format of this part of output is:
+      - my_count (simply a flag)
+      - branch index
+      - number of aligned bases w.r.t. the branch
+      - number of suspiciously aligned bases w.r.t. the branch
+      - % of suspiciously aligned bases w.r.t. the branch
+      - number of suspiciously aligned regions w.r.t. the branch
+
+   NOTICE: Please refer to parameters.txt for parameter settings of well- or suspiciously-aligned regions.
+
+
+4) Example:
+   combine  myAlign.maf  myOutDir  myPrefix  >  myStatSigMAw.res
+
+
+
+III. getSpeciesName
+
+1) Function:
+   The program generates a mapping between branch indices and species names. For each of the branches incident on leaves, it tells which species that branch is incident on.
+
+2) Usage:
+   getSpeciesName
+
+
+3) Output: 
+   The program generates the output to stdout. The output lists the mapping between branch indices and species names. For example, given the default tree provided in our code, branch #6 correponds to platypus, which means the branch incident on platypus has index 6.

@@ -1,0 +1,92 @@
+I. StatSigMAw_v2/SigMA/global.h
+
+   The following parameters are specified in StatSigMAw_v2/SigMA/global.h:
+
+1) MAX_BLOCK_SIZE 
+   default: 100000 
+
+   It specifies the maximum size of a SigMA block, which consists of contiguous alignment blocks. If the length of one alignment block is larger than specified value, MAX_BLOCK_SIZE will be assigned to the actual alignment block size.
+
+   NOTICE: When MAX_BLOCK_SIZE is huge, e.g. 10^6, the program could be slow in constructing the blocks.
+
+
+2) MAX_SEGMENTS
+   default: 100000
+
+   It specifies the max number of high-scoring segments identified by SigMA.
+
+
+3) TOTAL_NUM_TUPLES
+   default: 50000
+
+   It specifies max number of tuples subsampled from each SigMA block. The tuples are used for estimating Karlin-Altschul parameters.
+
+
+4) TOTAL_ITERATE_PARAM
+   default: 100
+
+   It specifies the number of times that Karlin-Altschul parameters will be computed across all SigMA blocks.
+
+   NOTICE: A larger value of TOTAL_ITERATE_PARAM will lead to more accurate parameters at the cost of running time.
+
+
+5) PHYLOGENY
+   default: (((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)
+
+   It specifies the phylogenetic tree corresponding to the alignment.
+
+
+6) REF_SPECIES[]=
+   default: "hg"
+
+   It specifies the reference species in the alignment.
+
+
+
+II. StatSigMAw_v2/combine/global_combine.h
+
+    The following parameters are specified in StatSigMAw_v2/combine/global_combine.h:
+
+1) MIN_SEG_SIZE
+   default: 50
+
+   It specifies the minimum size of suspicious or good regions.
+
+
+2) PVTHRESH_BAD
+   default: 0.1
+
+   It specifies the p-value threshold for suspicious regions. Every position in a suspicious region has a p-value greater than the specified value.
+
+
+3) PVTHRESH_GOOD
+   default: 1e-10
+
+   It specifies the p-value threshold for good regions. Every position in a good region has a p-value less than the specified value.
+
+
+
+III. StatSigMAw_v2/combine/tree_combine.h
+
+The following parameters are specified in StatSigMAw_v2/combine/tree_combine.h:
+
+1) NEWICK_TREE
+   default: the same as the tree specified in I.5.
+
+   It specifies the phylogenetic tree corresponding to the alignment. 
+
+   NOTICE: This tree has to be consistent with the tree specified in StatSigMAw_v2/SigMA/global.h.
+
+
+2) REF_SPECIES[]
+   default: "hg"
+
+   It specifies the reference species in the alignment.
+
+   NOTICE: This reference species has to be consistent with the one specified in StatSigMAw_v2/SigMA/global.h.
+
+
+3) MAX_NUM_SPECIES
+   default: 53
+
+   It specifies the max number of branches (NOT species) in the unrooted phylogenetic tree.

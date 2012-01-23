@@ -1,0 +1,22 @@
+1. Extract all files
+
+   tar -zxvf StatSigMAw_v2.tgz
+
+
+2. Compile SigMA and generate an executable file
+   Notice that the name of the executable file has to be start with "SigMA".
+
+   cd StatSigMAw_v2/SigMA
+   g++ -O2 -o SigMA SigMA.cpp
+
+
+3. Compile combine.cpp and generate an executable file
+
+   cd StatSigMAw_v2/combine
+   g++ -O2 -o combine combine.cpp
+
+
+4. Compile getSpeciesName and generate an executable files
+
+   cd StatSigMAw_v2/combine
+   g++ -O2 -o getSpeciesName getSpeciesName.cpp

@@ -28,13 +28,14 @@ struct globalOptions_t{
     int TOTAL_ITERATE_PARAM;
     char *PHYLOGENY;
     char *REF_SPECIES;
+    int verbose;
 };
-globalOptions_t globalOptions = {100000, 100000, 50000, 100, NULL, NULL};
+globalOptions_t globalOptions = {100000, 100000, 50000, 100, (char *) malloc(4096), (char *) malloc(32), 0};
 
 // maximum total size of contiguous alignment blocks allowed.
 // If the length of one alignment block is larger than value assigned below,
 // MAX_BLOCK_SIZE will be assigned to the actual alignment block size.
-int MAX_BLOCK_SIZE = 100000;
+//int MAX_BLOCK_SIZE = 100000;
          
 // max number of high-scoring segments
 const int MAX_SEGMENTS = 100000;  

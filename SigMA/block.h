@@ -25,8 +25,8 @@ using namespace __gnu_cxx;
 
 
 int name2species(char* name) { 
-    for (int i=0;i<species_num;i++)
-        if (strncmp(name,species_name[i],strlen(species_name[i]))==0)
+    for (int i = 0; i < species_num; i++)
+        if (strncmp(name, species_name[i], strlen(species_name[i])) == 0)
             return i;
     return -1;
 }
@@ -41,19 +41,19 @@ class single_block {
     int human_ref;
     list<double> block_score;
     single_block() {
-        length=0;
-        start=0;
-        align_start=0;
-        human_ref=-1;
-        block=new int*[MAX_BLOCK_SIZE];
-        for (int i=0;i<MAX_BLOCK_SIZE;i++) {
-            block[i]=new int[species_num];
-            for (int j=0;j<species_num;j++)
-                block[i][j]=RANDOM;
+        length = 0;
+        start = 0;
+        align_start = 0;
+        human_ref = -1;
+        block = new int*[globalOptions.MAX_BLOCK_SIZE];
+        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++) {
+            block[i] = new int[species_num];
+            for (int j = 0; j < species_num; j++)
+                block[i][j] = RANDOM;
         }
     }
     ~single_block() {
-        for (int i=0;i<MAX_BLOCK_SIZE;i++)
+        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
             delete [] block[i];
         delete [] block;
     }
@@ -86,9 +86,9 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
     else {
         seq1 = chain[0];
         seq2 = chain[1];
-        for (int i=0;i<MAX_BLOCK_SIZE;i++)
-            for (int j=0;j<species_num;j++)
-                seq1->block[i][j]=seq2->block[i][j];
+        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
+            for (int j = 0; j < species_num; j++)
+                seq1->block[i][j] = seq2->block[i][j];
         seq1->align_start += seq1->length;
         seq1->length = seq2->length;
         seq1->block_score = seq2->block_score;
@@ -99,39 +99,39 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
     total_length=CHR_LEN; // Every time make block_length = chr_len (used to compute statistics)
 
 
-    char *buffer = (char *) malloc(MAX_BLOCK_SIZE + 1);
+    char *buffer = (char *) malloc(globalOptions.MAX_BLOCK_SIZE + 1);
     buffer[0] = '\0';
     bool success = 0;
     int pos = -1;
 
     do {
 
-        for (int i=0;i<MAX_BLOCK_SIZE;i++)
-            for (int j=0;j<species_num;j++)
-                seq2->block[i][j]=RANDOM;
-        seq2->human_ref=-1;
+        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
+            for (int j = 0; j < species_num; j++)
+                seq2->block[i][j] = RANDOM;
+        seq2->human_ref = -1;
         seq2->length = 0;
-        seq2->start=0;
+        seq2->start = 0;
 
-        while (ifs && (buffer[0]!='a')) {
-            buffer[0]='\0';
-            ifs.getline(buffer,MAX_BLOCK_SIZE);
+        while (ifs && (buffer[0] != 'a')) {
+            buffer[0] = '\0';
+            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
         }
 
         char* str1=strtok(buffer,"=");
         if (str1) {
-            str1=strtok(NULL,"=");
+            str1 = strtok(NULL,"=");
             seq2->block_score.clear();
             seq2->block_score.push_back(atof(str1));
         }
 
-        buffer[0]='\0';
-        ifs.getline(buffer,MAX_BLOCK_SIZE);
+        buffer[0] = '\0';
+        ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
 
-        while ((ifs)&&(buffer[0]!='a')) {
+        while ((ifs)&&(buffer[0] != 'a')) {
             if (buffer[0] == 's') {
-                int sp = name2species(buffer+2);
-                success=1;
+                int sp = name2species(buffer + 2);
+                success = 1;
                 if (sp >= 0) {
                     char* str=strtok(buffer," ");
                     str=strtok(NULL," ");
@@ -154,7 +154,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             buffer[0]='\0';
             // record the position of pointer
             pos = ifs.tellg();
-            ifs.getline(buffer,MAX_BLOCK_SIZE);
+            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
         }
 
         int chars=0;
@@ -168,7 +168,9 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
 an="<< seq1->human_ref << "\tnew_human=" <<seq2->human_ref << endl;
 #endif
 
-        if (((chars==0)||(chars+seq1->start==seq2->start))&&(seq1->length+seq2->length<MAX_BLOCK_SIZE)&&(seq2->start>0)) {
+        if (((chars == 0) || (chars + seq1->start == seq2->start)) 
+            &&(seq1->length + seq2->length < globalOptions.MAX_BLOCK_SIZE)
+            &&(seq2->start > 0)) {
 
             for (int i=0;i<seq2->length;i++)
                 for (int j=0;j<species_num;j++)
@@ -199,7 +201,7 @@ an="<< seq1->human_ref << "\tnew_human=" <<seq2->human_ref << endl;
 bool blocks_type::read_from_stream(char* filename) {
     ifstream ifs(filename);
 
-    char *buffer = (char *) malloc(MAX_BLOCK_SIZE + 1);
+    char *buffer = (char *) malloc(globalOptions.MAX_BLOCK_SIZE + 1);
     bool success = 0;
 
     if (strstr(filename,".maf")) {
@@ -208,7 +210,8 @@ bool blocks_type::read_from_stream(char* filename) {
 #endif
         while (ifs) {
             buffer[0]='\0';
-            while (ifs && (ifs.getline(buffer,MAX_BLOCK_SIZE))&&(buffer[0]!='s'))
+            while (ifs && (ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE))
+                   &&(buffer[0] != 's'))
                 {}
             single_block* seq = new single_block;
             while ((ifs)&&(buffer[0]=='s')) {
@@ -229,7 +232,7 @@ bool blocks_type::read_from_stream(char* filename) {
                     seq->length=len;
                 }
                 buffer[0]='\0';
-                ifs.getline(buffer,MAX_BLOCK_SIZE);
+                ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
             }
             if (seq->length>0) {
                 chain.push_back(seq);
@@ -247,7 +250,7 @@ bool blocks_type::read_from_stream(char* filename) {
         int sp=-1;
         single_block* seq = new single_block;
         while(ifs) {
-            ifs.getline(buffer,MAX_BLOCK_SIZE);
+            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
             if (buffer[0] == '>') {
                 char* a = strtok(buffer + 1, " ");
                 while(!a)
@@ -279,7 +282,7 @@ bool blocks_type::read_from_stream(char* filename) {
         single_block* seq = new single_block;
         while (ifs) {
             int sp=-1;
-            ifs.getline(buffer,MAX_BLOCK_SIZE);
+            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
             char* name=strtok(buffer," ");
             if (name)
                 sp = name2species(name);

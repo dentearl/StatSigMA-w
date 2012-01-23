@@ -91,11 +91,11 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
         int bl1=0;
         int bl2=0;
     
-        int* good_tuple1 = (int *)malloc(sizeof(int) * MAX_BLOCK_SIZE);
-        int* good_tuple2 = (int *)malloc(sizeof(int) * MAX_BLOCK_SIZE);
+        int* good_tuple1 = (int *)malloc(sizeof(int) * globalOptions.MAX_BLOCK_SIZE);
+        int* good_tuple2 = (int *)malloc(sizeof(int) * globalOptions.MAX_BLOCK_SIZE);
         int good1 = 0, good2 = 0;
-        for (int i=0;i<MAX_BLOCK_SIZE;i++)
-            good_tuple1[i]=good_tuple2[i]=-1;
+        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
+            good_tuple1[i] = good_tuple2[i] = -1;
 
         for (int l1=0;l1<blocks.chain[bl1]->length;l1++) {
             for (int i=0;i<node->leaf_startnum;i++)
@@ -328,7 +328,7 @@ void scan_alignFile(char* mafFile) {
     CHR_START = -1;
     CHR_LEN = 0;
     ALIGN_LEN = 0;
-    int tempSize = 10 * MAX_BLOCK_SIZE;
+    int tempSize = 10 * globalOptions.MAX_BLOCK_SIZE;
 
     int last_pos = 0;
     int cur_len = 0;
@@ -340,9 +340,9 @@ void scan_alignFile(char* mafFile) {
         buffer[0]='\0';
         ifs.getline(buffer,tempSize);
         if ((strncmp(buffer,"a score=",8)==0) || (!ifs)) {
-            // make sure MAX_BLOCK_SIZE >= actual alignment block size
-            if (cur_len > MAX_BLOCK_SIZE)
-                MAX_BLOCK_SIZE = cur_len;
+            // make sure globalOptions.MAX_BLOCK_SIZE >= actual alignment block size
+            if (globalOptions.MAX_BLOCK_SIZE < cur_len)
+                globalOptions.MAX_BLOCK_SIZE = cur_len;
 
             ALIGN_LEN += cur_len;
             cur_len = 0;
@@ -395,10 +395,10 @@ double compute_pvalue_branch(Tree* node,Tree* parent,blocks_type& blocks,char* f
 
     scan_alignFile(filename);
 #ifdef DEBUG
-    cout<<"Chrmosome start position = "<<CHR_START<<endl;
-    cout<<"Sequence(non-gap) length = "<<CHR_LEN<<endl;
-    cout<<"Alignment length = "<<ALIGN_LEN<<endl;
-    cout<<"Max block size = "<<MAX_BLOCK_SIZE<<endl;
+    cout << "Chrmosome start position = "<< CHR_START << endl;
+    cout << "Sequence(non-gap) length = "<< CHR_LEN << endl;
+    cout << "Alignment length = " << ALIGN_LEN << endl;
+    cout << "Max block size = " << globalOptions.MAX_BLOCK_SIZE << endl;
 #endif
 
 

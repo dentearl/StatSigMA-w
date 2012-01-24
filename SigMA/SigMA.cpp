@@ -38,6 +38,10 @@ void usage(void);
 
 int main(int ARGC, char* ARGV[]) {
     loadDefaultParameters();
+    if(ARGC != 4){
+        fprintf(stderr, "Error: wrong number of arguments.\n");
+        usage();
+    }
     parseArgs(ARGC, ARGV);
     
     BRANCH_MULTIPLIER = atof(ARGV[3]);
@@ -183,7 +187,7 @@ void read_multi_pv(char* filename) {
     double c;
     if (!ifs) {
         cout << "multi_segment_pvalue.txt not found ... quitting\n";
-        exit(0);
+        exit(1);
     }
     while (ifs) {
         ifs >> a >> b >> c;
@@ -325,5 +329,4 @@ void parseArgs(int argc, char **argv)
         // globalOptions.inputFiles = argv + optind;
         // globalOptions.numInputFiles = argc - optind;
     }
-    exit(0);
 }

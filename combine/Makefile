@@ -7,12 +7,7 @@ CPPFLAGS = -O2 -g -Wall -Werror
 .PHONY = all clean test
 all: ../bin/combine ../bin/getSpeciesName
 
-../bin/combine: combine.cpp ${includes}
-	mkdir -p $(dir $@)
-	g++ ${CPPFLAGS} -o $@.tmp $<
-	mv $@.tmp $@
-
-../bin/%: %.cpp
+../bin/%: %.cpp ${includes}
 	mkdir -p $(dir $@)
 	g++ ${CPPFLAGS} -o $@.tmp $<
 	mv $@.tmp $@

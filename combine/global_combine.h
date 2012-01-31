@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <math.h>
 #include <assert.h>
 #include <string.h>
@@ -19,6 +20,29 @@
 using namespace std;
 using namespace __gnu_cxx;
 
+#define MAX_LENGTH_NEWICK 4096
+#define MAX_LENGTH_REF_SPECIES 32
+
+struct globalOptions_t{
+    // parameters for identifying suspicious or good regions:
+    //
+    // the min size of suspicious or good regions
+    int MIN_SEG_SIZE;
+    // the pvalue threshold for suspicious regions
+    float PVTHRESH_BAD;
+    // the pvalue threshold for good regions
+    float PVTHRESH_GOOD;
+    char *mafFile;
+    char *SigMAwOutDir;
+    char *SigMAwOutPrefix;
+    char *PHYLOGENY;
+    char *REF_SPECIES;
+    int verbose;
+};
+struct globalOptions_t globalOptions = {50, 0.1, 1e-10, (char *) malloc(100),
+                                        (char*) malloc(100), (char*) malloc(20),
+                                        (char*) malloc(MAX_LENGTH_NEWICK), 
+                                        (char*) malloc(MAX_LENGTH_REF_SPECIES), 0};
 
 // parameters for identifying suspicious or good regions:
 //
@@ -49,7 +73,7 @@ float* temp_pv;
 char* tree_pv;
 
 // human chr
-char hgChr[10] = "";
+char hgChr[128] = "";
 // human coordinates for each alignment column
 int* hgCoor;
 

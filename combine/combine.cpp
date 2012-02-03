@@ -72,7 +72,7 @@ bool isin_WorstSet(int i, int sp) {
 
 void read_present() {
     // Initialize
-    for (int i = 0; i < ALIGN_LEN; i++)
+    for (int i = 0; i < g_ALIGN_LEN; i++)
         for (int s = 0; s < branch_num; s++)
             set_Present(i, s, false);
     int cur_pos = 0;
@@ -80,13 +80,13 @@ void read_present() {
     bool cur_present[branch_num];
     for (int s = 0; s < branch_num; s++)
         cur_present[s] = false; 
-    ifstream ifs(mafFile);
-    char buffer[MAX_BLOCK_SIZE];
+    ifstream ifs(g_options.mafFile);
+    char buffer[g_MAX_BLOCK_SIZE];
     // boolb firstBlock = true;
     // int start_pos = 0;
     while (ifs) {
         buffer[0]='\0';
-        ifs.getline(buffer, MAX_BLOCK_SIZE);
+        ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8) == 0) || (!ifs)) {
             insert_inner_branches(cur_present);
             for (int i = 0; i < cur_len; i++)
@@ -103,7 +103,7 @@ void read_present() {
             if (buffer[0] == 's') {
                 // Checking for human
                 bool is_human = false;
-                if (strncmp(buffer + 2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0)
+                if (strncmp(buffer + 2, g_options.REF_SPECIES, strlen(g_options.REF_SPECIES)) == 0)
                     is_human = true;
                 a = strtok(buffer, " ");
                 a = strtok(NULL, " ");
@@ -123,24 +123,24 @@ void read_present() {
     ifs.close();
 }
 void read_gaps() {
-    for (int i = 0; i < ALIGN_LEN; i++)
+    for (int i = 0; i < g_ALIGN_LEN; i++)
         for (int s = 0; s < branch_num; s++)
             set_Gap(i, s, false);
   
     int cur_pos = 0;
     int cur_len = 0;
-    char buffer[MAX_BLOCK_SIZE];
+    char buffer[g_MAX_BLOCK_SIZE];
     bool **cur_gaps;
     cur_gaps = (bool **) malloc(sizeof(bool *) * branch_num);
     for (int s = 0; s < branch_num; s++)
-        cur_gaps[s] = (bool *) malloc(sizeof(bool) * MAX_BLOCK_SIZE);
+        cur_gaps[s] = (bool *) malloc(sizeof(bool) * g_MAX_BLOCK_SIZE);
     for (int s = 0; s < branch_num; s++)
-        for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+        for (int i = 0; i < g_MAX_BLOCK_SIZE; i++)
             cur_gaps[s][i] = true;
-    ifstream ifs(mafFile);
+    ifstream ifs(g_options.mafFile);
     while (ifs) {
         buffer[0]='\0';
-        ifs.getline(buffer, MAX_BLOCK_SIZE);
+        ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8) == 0) || (!ifs)) {      
             bool tmp_gaps[branch_num];
             for (int i = 0; i < cur_len; i++) {
@@ -153,7 +153,7 @@ void read_gaps() {
             // Reset
             cur_pos += cur_len;
             for (int s = 0; s < branch_num; s++)
-                for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+                for (int i = 0; i < g_MAX_BLOCK_SIZE; i++)
                     cur_gaps[s][i]=true;
             cur_len = 0;
         }else {
@@ -161,7 +161,7 @@ void read_gaps() {
             if (buffer[0] == 's') {
                 // Checking for reference species
                 bool is_human = false;
-                if (strncmp(buffer + 2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0)
+                if (strncmp(buffer + 2, g_options.REF_SPECIES, strlen(g_options.REF_SPECIES)) == 0)
                     is_human = true;
                 a = strtok(buffer, " ");
                 a = strtok(NULL, " ");
@@ -227,7 +227,7 @@ bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& r
         start = atoi(a);
         a = strtok(NULL, " \t");
         end = atoi(a);
-        if (end > ALIGN_LEN) end = ALIGN_LEN;
+        if (end > g_ALIGN_LEN) end = g_ALIGN_LEN;
         return true;
     }
     return false;
@@ -236,17 +236,17 @@ bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& r
 // Identifying good regions  (removed gap_check, because now gaps are counted after outputting good regions)
 void output_good_regions() {
     int start = -1;
-    for (int i = 0; i < ALIGN_LEN; i++) {
-        if (get_PV(i) < PVTHRESH_GOOD) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        if (get_PV(i) < g_options.PVTHRESH_GOOD) {
             if (start == -1)
                 start = i;
         }
         else if (start != -1) {
             int currLen = i - start;
-            if (currLen >= MIN_SEG_SIZE) {
+            if (currLen >= g_options.MIN_SEG_SIZE) {
                 // the first and the last human coordinates in current region                
                 int c = start;
-                while ((hgCoor[c] == -1) && (c < ALIGN_LEN - 1))
+                while ((hgCoor[c] == -1) && (c < g_ALIGN_LEN - 1))
                     c++;
                 int firstHgCoor = hgCoor[c];
 	
@@ -269,7 +269,9 @@ void read_output_pv(const char* branch_multiplier) {
         double pv;
         char filename[1000];
         sprintf(filename, "%s/%s.%d_%s.out", 
-                SigMAwOutDir, SigMAwOutPrefix, sp, branch_multiplier);
+                g_options.SigMAwOutDir, 
+                g_options.SigMAwOutPrefix, 
+                sp, branch_multiplier);
         //cout<<filename<<endl;
         ifstream ifs(filename);
         while (read_segment(ifs, start, end, left_nearest, right_nearest, pv))
@@ -295,7 +297,9 @@ void read_output_worstbranch(const char* branch_multiplier) {
         double pv;
         char filename[1000];
         sprintf(filename, "%s/%s.%d_%s.out", 
-                SigMAwOutDir, SigMAwOutPrefix, sp, branch_multiplier);
+                g_options.SigMAwOutDir, 
+                g_options.SigMAwOutPrefix, 
+                sp, branch_multiplier);
         ifstream ifs(filename);
         while (read_segment(ifs, start, end, left_nearest, right_nearest, pv))
             for (int i = start; i<=end; i++) {
@@ -318,7 +322,9 @@ void read_pv_dist(char* branch_multiplier, int sp) {
     double pv;
     char filename[1000];
     sprintf(filename, "%s/%s.%d_%s.out", 
-            SigMAwOutDir, SigMAwOutPrefix, sp, branch_multiplier);
+            g_options.SigMAwOutDir, 
+            g_options.SigMAwOutPrefix, 
+            sp, branch_multiplier);
     ifstream ifs(filename);
     while (read_segment(ifs, start, end, left_nearest, right_nearest, pv))
         if (end - start >= 0) {
@@ -339,18 +345,18 @@ void read_pv_dist(char* branch_multiplier, int sp) {
 }
 
 void scan_alignFile() {
-    ALIGN_LEN = 0;
+    g_ALIGN_LEN = 0;
     int cur_len = 0;
-    char buffer[MAX_BLOCK_SIZE];
+    char buffer[g_MAX_BLOCK_SIZE];
     bool firstBlock = true;
     int currStart = 0;
     int currNtNum = 0;
-    ifstream ifs(mafFile);
+    ifstream ifs(g_options.mafFile);
     while (ifs) {
         buffer[0]='\0';
-        ifs.getline(buffer, MAX_BLOCK_SIZE);
+        ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8)==0) || (!ifs)) {
-            ALIGN_LEN += cur_len;
+            g_ALIGN_LEN += cur_len;
             cur_len = 0;
         }
         else {
@@ -358,7 +364,7 @@ void scan_alignFile() {
             if (buffer[0]=='s') {
                 // Checking for human
                 bool is_human = false;
-                if (strncmp(buffer + 2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0)
+                if (strncmp(buffer + 2, g_options.REF_SPECIES, strlen(g_options.REF_SPECIES)) == 0)
                     is_human = true;
                 if (is_human) {
                     a = strtok(buffer, " ");
@@ -366,7 +372,7 @@ void scan_alignFile() {
                     a = strtok(NULL, " ");
                     currStart = atoi(a);
                     if (firstBlock) {
-                        CHR_START = atoi(a);
+                        g_CHR_START = atoi(a);
                         firstBlock = false;
                     }
                     a = strtok(NULL, " ");
@@ -385,15 +391,15 @@ void scan_alignFile() {
 void map_humanCoordinates() {
     int cumStart = 0;
     int cur_len = 0;
-    char buffer[MAX_BLOCK_SIZE];
+    char buffer[g_MAX_BLOCK_SIZE];
     bool firstBlock = true;
     char *orient;
     int currHgPos = 0;
     int chrLen = 0;
-    ifstream ifs(mafFile);
+    ifstream ifs(g_options.mafFile);
     while (ifs) {
         buffer[0] = '\0';
-        ifs.getline(buffer, MAX_BLOCK_SIZE);
+        ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8) == 0) || (!ifs)) {
             cumStart += cur_len;
             cur_len = 0;
@@ -403,7 +409,7 @@ void map_humanCoordinates() {
             if (buffer[0]=='s') {
                 // Checking for human
                 bool is_human = false;
-                if (strncmp(buffer + 2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0)
+                if (strncmp(buffer + 2, g_options.REF_SPECIES, strlen(g_options.REF_SPECIES)) == 0)
                     is_human = true;
                 if (is_human) {
                     a = strtok(buffer, " ");
@@ -451,23 +457,23 @@ int main(int argc, char* argv[]) {
         usage();
     }
     
-    strcpy(mafFile, argv[1]);
-    strcpy(SigMAwOutDir, argv[2]);
-    strcpy(SigMAwOutPrefix, argv[3]);
+    strcpy(g_options.mafFile, argv[1]);
+    strcpy(g_options.SigMAwOutDir, argv[2]);
+    strcpy(g_options.SigMAwOutPrefix, argv[3]);
   
     scan_alignFile();
-    cout << "alignmnt length: "<< ALIGN_LEN << endl;
-    cur_pv = (float *) malloc(sizeof(float) * ALIGN_LEN);
-    temp_pv = (float *) malloc(sizeof(float) * ALIGN_LEN);
+    cout << "alignmnt length: "<< g_ALIGN_LEN << endl;
+    cur_pv = (float *) malloc(sizeof(float) * g_ALIGN_LEN);
+    temp_pv = (float *) malloc(sizeof(float) * g_ALIGN_LEN);
     // record the tree ID that has min(max PValue)
-    tree_pv = (char *) malloc(sizeof(char) * ALIGN_LEN);
+    tree_pv = (char *) malloc(sizeof(char) * g_ALIGN_LEN);
     read_newick_tree();
-    assert(branch_num * ALIGN_LEN < 1e9);
+    assert(branch_num * g_ALIGN_LEN < 1e9);
     cout << "read tree" << endl;  
     // memory allocate
     present = (bool **) malloc(sizeof(bool *) * branch_num);
     for (int s = 0; s < branch_num; s++) 
-        present[s] = (bool *) malloc(sizeof(bool) * ALIGN_LEN);
+        present[s] = (bool *) malloc(sizeof(bool) * g_ALIGN_LEN);
     // read in present[] for each branch - position, 
     // indicating if the branch is "present" at the  position
     read_present();
@@ -478,14 +484,14 @@ int main(int argc, char* argv[]) {
     // Using temp_pv as the structure to store temporary pvalue (as the 3 trees are read)
   
     // initialize
-    for (int i = 0; i < ALIGN_LEN; i++) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
         set_PV(i, 0);
         temp_pv[i] = 1;
         tree_pv[i] = 'n';
     }
     // for tree "100", ID is 2.
     read_output_pv("100");
-    for (int i = 0; i < ALIGN_LEN; i++) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
         if ((temp_pv[i] > cur_pv[i]) && (!is_NonePresent(i))) {
             temp_pv[i] = cur_pv[i];
             tree_pv[i] = '2';
@@ -494,7 +500,7 @@ int main(int argc, char* argv[]) {
     }
     // for tree "0.01", ID is 0
     read_output_pv("0.01");
-    for (int i = 0; i < ALIGN_LEN; i++) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
         if ((temp_pv[i] > cur_pv[i]) && (!is_NonePresent(i))) {
             temp_pv[i] = cur_pv[i];
             tree_pv[i] = '0';
@@ -503,7 +509,7 @@ int main(int argc, char* argv[]) {
     }
     // for tree "1", ID is 1.
     read_output_pv("1");
-    for (int i = 0; i < ALIGN_LEN; i++) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
         if (temp_pv[i] < cur_pv[i])
             cur_pv[i] = temp_pv[i];
         else
@@ -515,15 +521,15 @@ int main(int argc, char* argv[]) {
     // memory allocate
     worst_set = (bool **) malloc(sizeof(bool *) * (branch_num + 1));
     for (int s = 0; s < (branch_num + 1); s++)
-        worst_set[s] = (bool *) malloc(sizeof(bool) * ALIGN_LEN);
-    for (int i = 0; i < ALIGN_LEN; i++)
+        worst_set[s] = (bool *) malloc(sizeof(bool) * g_ALIGN_LEN);
+    for (int i = 0; i < g_ALIGN_LEN; i++)
         init_WorstSet(i);
     read_output_worstbranch("100");
     read_output_worstbranch("0.01");
     read_output_worstbranch("1");
     cout << "identified worst_set" << endl;
     // Bonferonni Correction for  the curr_pv (due to three trees different)
-    for (int i = 0; i < ALIGN_LEN; i++) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
         float f = get_PV(i);
         if (f > 0.33)
             set_PV(i, 1);
@@ -534,7 +540,7 @@ int main(int argc, char* argv[]) {
     int count[branch_num + 1][3];
     for (int sp = 0; sp < branch_num + 1; sp++) {
         count[sp][0] = count[sp][1] = count[sp][2] = 0;
-        for (int i = 0; i < ALIGN_LEN; i++)
+        for (int i = 0; i < g_ALIGN_LEN; i++)
             if (sp < branch_num) {
                 if (get_Present(i, sp))
                     count[sp][0]++;
@@ -551,13 +557,13 @@ int main(int argc, char* argv[]) {
     free(present);
     gaps = (bool **)malloc(sizeof(bool *) * branch_num);
     for (int s = 0; s < branch_num; s++)
-        gaps[s] = (bool *)malloc(sizeof(bool) * ALIGN_LEN);
+        gaps[s] = (bool *)malloc(sizeof(bool) * g_ALIGN_LEN);
     // Reading gaps
     read_gaps();
     cout<<"read gaps"<<endl;
 
     // map alignment coordinates to human coordinates
-    hgCoor = (int *)malloc(sizeof(int) * ALIGN_LEN);
+    hgCoor = (int *)malloc(sizeof(int) * g_ALIGN_LEN);
     map_humanCoordinates();
     cout << "got human coordinates map" << endl;
     // Identigying good regions
@@ -566,9 +572,9 @@ int main(int argc, char* argv[]) {
     int start;
     for (int sp = 0; sp < branch_num; sp++) {
         start = -1;
-        for (int i = 0; i < ALIGN_LEN; i++) {
+        for (int i = 0; i < g_ALIGN_LEN; i++) {
             // when current position is a bad one
-            if ((get_PV(i) >= PVTHRESH_BAD) && (isin_WorstSet(i, sp))) {
+            if ((get_PV(i) >= g_options.PVTHRESH_BAD) && (isin_WorstSet(i, sp))) {
                 // starting position
                 if (start == -1)
                     start = i;
@@ -576,7 +582,7 @@ int main(int argc, char* argv[]) {
             // when current position is a good one, output the region before it if the region is long enough.
             else if (start != -1) {
                 int currLen = i - start;
-                if (currLen >= MIN_SEG_SIZE) {
+                if (currLen >= g_options.MIN_SEG_SIZE) {
                     // count the number of gaps in the region.
                     int gap_count = 0;
                     for (int j = start; j < i; j++)
@@ -584,7 +590,7 @@ int main(int argc, char* argv[]) {
                             gap_count++;
                     // the first and the last human coordinates in current region
                     int c = start;
-                    while ((hgCoor[c] == -1) && (c < ALIGN_LEN - 1))
+                    while ((hgCoor[c] == -1) && (c < g_ALIGN_LEN - 1))
                         c++;
                     int firstHgCoor = hgCoor[c];
 	  
@@ -615,7 +621,7 @@ int main(int argc, char* argv[]) {
 
     // Compute stats for bad positions due to any branch.
     start = -1;
-    for (int i = 0; i < ALIGN_LEN; i++) {
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
         if (isin_WorstSet(i, branch_num)) {
             if (start == -1)
                 start = i;
@@ -636,13 +642,73 @@ int main(int argc, char* argv[]) {
 
 void usage(void)
 {
-    fprintf(stderr, "Usage: combine blah blah blah.\n");
+    fprintf(stderr, "Usage: combine <maf file> <SigMA output dir> <SigMA output prefix> [options]\n\n");
+    fprintf(stderr, "  <maf file>: the multiple sequence alignment in maf format.\n");
+    fprintf(stderr, "  <SigMA output dir>: the directory where the SigMA output files are located.\n");
+    fprintf(stderr, "  <SigMA output prefix>: the prefix of SigMA output file names.\n");
+    fprintf(stderr, "\nDESCRIPTION\n");
+    fprintf(stderr, "Given the directory where the SigMA output files are located \n"
+            "and the prefix of SigMA output files, the alignment segments \n"
+            "identified by SigMA for all branches in the phylogenetic tree \n"
+            "and for all three branch multipliers are assessed. The program \n"
+            "finally identifies suspiciously aligned regions with respect to \n"
+            "each branch.\n\n"
+            "NOTICE: This program assumes that SigMA has been run on the \n"
+            "combinations of ALL possible branches of the phylogenetic tree \n"
+            "and THREE branch multipliers (0.01, 1 and 100).\n"
+            );
+    fprintf(stderr, "\nOUTPUT\n"
+            "The program generates the output to stdout. The output consists \n"
+            "of three parts:\n"
+            "  a) Regions that are well aligned with respect to ALL branches.\n"
+            "     The format of this part of output is:\n"
+            "    - my_good_region (simply a flag) \n"
+            "    - start position of this region (in the alignment coordinate,\n"
+            "      i.e. which column in the alignment is this position)\n"
+            "    - length of this region\n"
+            "    - chromosome\n"
+            "    - start position\n"
+            "    - end position\n\n"
+            "The last three items show the genomic coordinates of the reference \n"
+            "species for this region.\n\n"
+            "  b) Regions that are suspiciously aligned w.r.t. a branch. The \n"
+            "     format of this part of output is:\n"
+            "    - my_bad_region (simply a flag) \n"
+            "    - start position of this region (in the alignment coordinate, \n"
+            "      i.e. which column in the alignment is this position)\n"
+            "    - branch index (the region is suspiciously aligned with respect \n"
+            "      to this particular branch)\n"
+            "    - length of this region\n"
+            "    - chromosome\n"
+            "    - start position\n"
+            "    - end position\n\n"
+            "Again, the last three items show the genomic coordinates of the \n"
+            "reference species for this region.\n\n"
+            "Note: For regions that are suspiciously aligned with respect to a \n"
+            "branch incident on a leaf (i.e., a species), you can read them as \n"
+            "regions where that species is suspiciously aligned to the other \n"
+            "species.\n\n"
+            "  c) Statistics for suspiciously-aligned regions. The format of \n"
+            "     this part of output is:\n"
+            "    - my_count (simply a flag)\n"
+            "    - branch index\n"
+            "    - number of aligned bases w.r.t. the branch\n"
+            "    - number of suspiciously aligned bases w.r.t. the branch\n"
+            "    - %% of suspiciously aligned bases w.r.t. the branch\n"
+            "    - number of suspiciously aligned regions w.r.t. the branch\n\n"
+            "NOTICE: Please refer to parameters.txt for parameter settings of \n"
+            "well- or suspiciously-aligned regions.\n"
+            );
+    fprintf(stderr, "\nEXAMPLE\n"
+            "   combine  myAlign.maf  myOutDir  myPrefix  >  myStatSigMAw.res\n"
+            );
+    exit(1);
 }
 
 void loadDefaultParameters(void)
 {
-    strcpy(globalOptions.PHYLOGENY, "(((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)");
-    strcpy(globalOptions.REF_SPECIES, "hg");
+    strcpy(g_options.PHYLOGENY, "(((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)");
+    strcpy(g_options.REF_SPECIES, "hg");
 }
 
 int parseArgs(int argc, char **argv)
@@ -667,39 +733,39 @@ int parseArgs(int argc, char **argv)
         switch(opt) {
         case 0:
             if(strcmp("phylogeny", longOpts[longIndex].name) == 0){
-                if (!sscanf(optarg, "%4095s", globalOptions.PHYLOGENY)){
+                if (!sscanf(optarg, "%4095s", g_options.PHYLOGENY)){
                     fprintf(stderr, "Unable to read --phylogeny\n");
                     exit(1);
                     break;
                 }
-                if (strlen(globalOptions.PHYLOGENY) == (unsigned) MAX_LENGTH_NEWICK - 1){
+                if (strlen(g_options.PHYLOGENY) == (unsigned) d_MAX_LENGTH_NEWICK - 1){
                     fprintf(stderr, "Unable to read --phylogeny, too large!\n");
                     exit(1);
                     break;
                 }
             }else if(strcmp("refSpecies", longOpts[longIndex].name) == 0){
-                if (!sscanf(optarg, "%31s", globalOptions.REF_SPECIES)){
+                if (!sscanf(optarg, "%31s", g_options.REF_SPECIES)){
                     fprintf(stderr, "Unable to read --refSpecies\n");
                     exit(1);
                     break;
                 }
-                if (strlen(globalOptions.REF_SPECIES) == (unsigned) MAX_LENGTH_REF_SPECIES - 1){
+                if (strlen(g_options.REF_SPECIES) == (unsigned) d_MAX_LENGTH_REF_SPECIES - 1){
                     fprintf(stderr, "Unable to read --refSpecies, too large!\n");
                     exit(1);
                     break;
                 }
             }else if(strcmp("minSegSize", longOpts[longIndex].name) == 0){
-                globalOptions.MIN_SEG_SIZE = atoi(optarg);
+                g_options.MIN_SEG_SIZE = atoi(optarg);
                 break;
             }else if(strcmp("pThreshBad", longOpts[longIndex].name) == 0){
-                globalOptions.PVTHRESH_BAD = atof(optarg);
+                g_options.PVTHRESH_BAD = atof(optarg);
                 break;
             }else if(strcmp("pThreshGood", longOpts[longIndex].name) == 0){
-                globalOptions.PVTHRESH_GOOD = atof(optarg);
+                g_options.PVTHRESH_GOOD = atof(optarg);
                 break;
             }
         case 'v':
-            globalOptions.verbose++;
+            g_options.verbose++;
             break;
         case '?':
         case 'h':
@@ -709,8 +775,8 @@ int parseArgs(int argc, char **argv)
             break;
         }
         opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
-        // globalOptions.inputFiles = argv + optind;
-        // globalOptions.numInputFiles = argc - optind;
+        // g_options.inputFiles = argv + optind;
+        // g_options.numInputFiles = argc - optind;
         numInputFiles = argc - optind;
     }
     return numInputFiles;

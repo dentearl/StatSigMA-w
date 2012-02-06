@@ -10,7 +10,10 @@
  *    Xiaoyu Chen and Martin Tompa, "Comparative assessment of methods for aligning multiple genome sequences". Nature Biotechnology, vol. 28, no. 6, June 2010, 567-572.
  */
 
-int MAX_NUM_SPECIES = 0; // determined at runtime
+#define d_MAX_LENGTH_NEWICK 4096
+#define d_MAX_LENGTH_REF_SPECIES 32
+
+int g_NUM_SPECIES = 0; // determined at runtime
 class Tree;
 Tree* root;
 Tree** list_of_branches;
@@ -106,20 +109,40 @@ Tree::~Tree() {
     if (right_subtree) delete right_subtree;
 }
 
+void checkPos(int& pos, unsigned limit)
+{
+    if ((int) limit < pos){
+        cerr << "Error, pos > phylogeny length (" << pos 
+             << " > " << limit << ")" << "." << endl
+             << "This can be caused by a newick parsing error." << endl;
+        exit(1);
+    }
+}
+
 Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
-    while (isblank(newick_format[pos]))
+    while (isblank(newick_format[pos])){
         pos++;
+        checkPos(pos, strlen(newick_format));
+    }
     if (newick_format[pos] == '(') {
         pos++;
+        checkPos(pos, strlen(newick_format));
         Tree* left = read_tree(newick_format, sp_num, pos);
-        while (newick_format[pos] != ':')
+        while (newick_format[pos] != ':'){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         pos++;
-        while (isblank(newick_format[pos]))
+        checkPos(pos, strlen(newick_format));
+        while (isblank(newick_format[pos])){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         int start_pos = pos;
-        while (newick_format[pos] != ',')
+        while (newick_format[pos] != ','){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         char branch_length[100];
         strncpy(branch_length, newick_format + start_pos, pos - start_pos);
         branch_length[pos - start_pos] = '\0';
@@ -127,27 +150,38 @@ Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
         if (left_branch < 0.001) left_branch = 0.001;
 
         pos++;
+        checkPos(pos, strlen(newick_format));
         Tree* right = read_tree(newick_format, sp_num, pos);
-        while (newick_format[pos] != ':')
+        while (newick_format[pos] != ':'){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         pos++;
-        while (isblank(newick_format[pos]))
+        checkPos(pos, strlen(newick_format));
+        while (isblank(newick_format[pos])){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         start_pos = pos;
-        while (newick_format[pos] != ')')
+        while (newick_format[pos] != ')'){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         strncpy(branch_length, newick_format + start_pos, pos - start_pos);
         branch_length[pos - start_pos] = '\0';
         float right_branch = atof(branch_length);
         if (right_branch < 0.001) right_branch = 0.001;
     
         pos++;
+        checkPos(pos, strlen(newick_format));
         return (new Tree(left, right));
     }
     else {
         int start_pos = pos;
-        while (newick_format[pos] != ':')
+        while (newick_format[pos] != ':'){
             pos++;
+            checkPos(pos, strlen(newick_format));
+        }
         char sp_name[10000];
         strncpy(sp_name, newick_format + start_pos, pos - start_pos);
         sp_name[pos-start_pos] = '\0';    
@@ -208,18 +242,24 @@ int countNodes(Tree *node)
         return 0;
     Tree* l = node->left_subtree;
     Tree* r = node->right_subtree;
-    // static int i = 0;
+    static int i = 0;
     int leftNum = 0, rightNum = 0, c = 0;
     if (node == root){
-        // cout << i << " name: " << l->tree_name << endl;
-        // ++i;
+        if (g_options.printAll){
+            cout << setw(2) << i << "\t" << l->tree_name << endl;
+            ++i;
+        }
         ++c;
     }else{
-        // cout << i << " name: " << l->tree_name << endl;
-        // ++i;
+        if (g_options.printAll){
+            cout << setw(2) << i << "\t" << l->tree_name << endl;
+            ++i;
+        }
         ++c;
-        // cout << i << " name: " << r->tree_name << endl;
-        // ++i;
+        if (g_options.printAll){
+            cout << setw(2) << i << "\t" << r->tree_name << endl;
+            ++i;
+        }
         ++c;
     }
     if (l->left_subtree) leftNum = countNodes(l);
@@ -230,11 +270,11 @@ int countNodes(Tree *node)
 void read_newick_tree(void) {
     int pos = 0;
     species_num = 0;
-    root = read_tree(globalOptions.PHYLOGENY, species_num, pos);
-    MAX_NUM_SPECIES = countNodes(root);
-    list_of_branches = (Tree **) malloc(MAX_NUM_SPECIES * sizeof(Tree *));
-    species_name = (char**) malloc(MAX_NUM_SPECIES * sizeof(char *));
-    for (int i = 0; i < MAX_NUM_SPECIES; i++){
+    root = read_tree(g_options.PHYLOGENY, species_num, pos);
+    g_NUM_SPECIES = countNodes(root);
+    list_of_branches = (Tree **) malloc(g_NUM_SPECIES * sizeof(Tree *));
+    species_name = (char**) malloc(g_NUM_SPECIES * sizeof(char *));
+    for (int i = 0; i < g_NUM_SPECIES; i++){
         species_name[i] = (char *) malloc(32);
         strcpy(species_name[i], "\0");
     }
@@ -245,7 +285,7 @@ void read_newick_tree(void) {
 bool is_OnPathToHuman(int leaf, int edge) {
 
     Tree* start = list_of_branches[leaf];
-    Tree* ref = list_of_branches[name2branch(globalOptions.REF_SPECIES)];
+    Tree* ref = list_of_branches[name2branch(g_options.REF_SPECIES)];
     Tree* e = list_of_branches[edge];
 
     // Storing path from human to root
@@ -293,7 +333,7 @@ void insert_inner_branches(bool *cur_sp) {
     for (int i = 0; i < branch_num; i++)
         list_of_branches[i]->is_both_present = list_of_branches[i]->is_any_present = cur_sp[i];
 
-    Tree* ref = list_of_branches[name2branch(globalOptions.REF_SPECIES)];
+    Tree* ref = list_of_branches[name2branch(g_options.REF_SPECIES)];
 
     // Going up from human, and filling each sibling subtree
     Tree* temp = ref;
@@ -400,6 +440,7 @@ void check_gapped_branches(bool *cur_sp) {
                 temp = prt;
             }
         }
+
         cur_sp[s] = allGaps;
     }
 }

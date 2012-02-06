@@ -114,7 +114,7 @@ void checkPos(int& pos, unsigned limit)
     if ((int) limit < pos){
         cerr << "Error, pos > phylogeny length (" << pos 
              << " > " << limit << ")" << "." << endl
-             << "This can be caused by a newick parsing error." << endl;
+             << "This can be caused by a newick parsing error. Try removing spaces from tree." << endl;
         exit(1);
     }
 }

@@ -7,7 +7,7 @@ all: ../bin/SigMA
 
 ../bin/SigMA: SigMA.cpp ${includes}
 	mkdir -p $(dir $@)
-	g++ -Wall -Werror -pedantic -O2 -o $@.tmp $<
+	g++ -g -Wall -Werror -pedantic -O2 -o $@.tmp $<
 	mv $@.tmp $@
 
 clean:

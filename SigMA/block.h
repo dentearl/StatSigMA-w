@@ -45,15 +45,15 @@ class single_block {
         start = 0;
         align_start = 0;
         human_ref = -1;
-        block = new int*[globalOptions.MAX_BLOCK_SIZE];
-        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++) {
+        block = new int*[g_options.MAX_BLOCK_SIZE];
+        for (int i = 0; i < g_options.MAX_BLOCK_SIZE; i++) {
             block[i] = new int[species_num];
             for (int j = 0; j < species_num; j++)
                 block[i][j] = RANDOM;
         }
     }
     ~single_block() {
-        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
+        for (int i = 0; i < g_options.MAX_BLOCK_SIZE; i++)
             delete [] block[i];
         delete [] block;
     }
@@ -86,7 +86,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
     else {
         seq1 = chain[0];
         seq2 = chain[1];
-        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
+        for (int i = 0; i < g_options.MAX_BLOCK_SIZE; i++)
             for (int j = 0; j < species_num; j++)
                 seq1->block[i][j] = seq2->block[i][j];
         seq1->align_start += seq1->length;
@@ -99,14 +99,14 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
     total_length=CHR_LEN; // Every time make block_length = chr_len (used to compute statistics)
 
 
-    char *buffer = (char *) malloc(globalOptions.MAX_BLOCK_SIZE + 1);
+    char *buffer = (char *) malloc(g_options.MAX_BLOCK_SIZE + 1);
     buffer[0] = '\0';
     bool success = 0;
     int pos = -1;
 
     do {
 
-        for (int i = 0; i < globalOptions.MAX_BLOCK_SIZE; i++)
+        for (int i = 0; i < g_options.MAX_BLOCK_SIZE; i++)
             for (int j = 0; j < species_num; j++)
                 seq2->block[i][j] = RANDOM;
         seq2->human_ref = -1;
@@ -115,7 +115,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
 
         while (ifs && (buffer[0] != 'a')) {
             buffer[0] = '\0';
-            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
+            ifs.getline(buffer, g_options.MAX_BLOCK_SIZE);
         }
 
         char* str1=strtok(buffer,"=");
@@ -126,7 +126,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         }
 
         buffer[0] = '\0';
-        ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
+        ifs.getline(buffer, g_options.MAX_BLOCK_SIZE);
 
         while ((ifs)&&(buffer[0] != 'a')) {
             if (buffer[0] == 's') {
@@ -137,7 +137,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
                     str=strtok(NULL," ");
                     str=strtok(NULL," ");
                     int coord = atoi(str);
-                    if (strncmp(buffer + 2, globalOptions.REF_SPECIES, strlen(globalOptions.REF_SPECIES)) == 0) {
+                    if (strncmp(buffer + 2, g_options.REF_SPECIES, strlen(g_options.REF_SPECIES)) == 0) {
                         seq2->start = coord;
                         seq2->human_ref = sp;
                     }
@@ -154,7 +154,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             buffer[0]='\0';
             // record the position of pointer
             pos = ifs.tellg();
-            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
+            ifs.getline(buffer, g_options.MAX_BLOCK_SIZE);
         }
 
         int chars=0;
@@ -169,7 +169,7 @@ an="<< seq1->human_ref << "\tnew_human=" <<seq2->human_ref << endl;
 #endif
 
         if (((chars == 0) || (chars + seq1->start == seq2->start)) 
-            &&(seq1->length + seq2->length < globalOptions.MAX_BLOCK_SIZE)
+            &&(seq1->length + seq2->length < g_options.MAX_BLOCK_SIZE)
             &&(seq2->start > 0)) {
 
             for (int i=0;i<seq2->length;i++)
@@ -201,7 +201,7 @@ an="<< seq1->human_ref << "\tnew_human=" <<seq2->human_ref << endl;
 bool blocks_type::read_from_stream(char* filename) {
     ifstream ifs(filename);
 
-    char *buffer = (char *) malloc(globalOptions.MAX_BLOCK_SIZE + 1);
+    char *buffer = (char *) malloc(g_options.MAX_BLOCK_SIZE + 1);
     bool success = 0;
 
     if (strstr(filename,".maf")) {
@@ -210,7 +210,7 @@ bool blocks_type::read_from_stream(char* filename) {
 #endif
         while (ifs) {
             buffer[0]='\0';
-            while (ifs && (ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE))
+            while (ifs && (ifs.getline(buffer, g_options.MAX_BLOCK_SIZE))
                    &&(buffer[0] != 's'))
                 {}
             single_block* seq = new single_block;
@@ -232,7 +232,7 @@ bool blocks_type::read_from_stream(char* filename) {
                     seq->length=len;
                 }
                 buffer[0]='\0';
-                ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
+                ifs.getline(buffer, g_options.MAX_BLOCK_SIZE);
             }
             if (seq->length>0) {
                 chain.push_back(seq);
@@ -250,7 +250,7 @@ bool blocks_type::read_from_stream(char* filename) {
         int sp=-1;
         single_block* seq = new single_block;
         while(ifs) {
-            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
+            ifs.getline(buffer, g_options.MAX_BLOCK_SIZE);
             if (buffer[0] == '>') {
                 char* a = strtok(buffer + 1, " ");
                 while(!a)
@@ -282,7 +282,7 @@ bool blocks_type::read_from_stream(char* filename) {
         single_block* seq = new single_block;
         while (ifs) {
             int sp=-1;
-            ifs.getline(buffer, globalOptions.MAX_BLOCK_SIZE);
+            ifs.getline(buffer, g_options.MAX_BLOCK_SIZE);
             char* name=strtok(buffer," ");
             if (name)
                 sp = name2species(name);

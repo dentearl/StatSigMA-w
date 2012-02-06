@@ -23,35 +23,34 @@ Tree* list_of_leaves[MAX_NUM_SPECIES];
 
 #include "pvalue.h"
 
-#define length(x) (sizeof(x) / sizeof(x[0]))
-
 // Helper Functions
 Tree* read_tree(char newick_format[], int& sp_num, int& pos);
 void generate_and_read_newick_tree();
 void read_multi_pv(char* filename);
 void init_background();
+void verifyNewickBounds(int pos);
 void loadDefaultParameters(void);
-void parseArgs(int argc, char **argv);
+int parseArgs(int argc, char **argv);
 void usage(void);
 
 // Main program
 
-int main(int ARGC, char* ARGV[]) {
+int main(int argc, char* argv[]) {
     loadDefaultParameters();
-    if(ARGC != 4){
+    int n = parseArgs(argc, argv);
+    if(n != 4){
         fprintf(stderr, "Error: wrong number of arguments.\n");
         usage();
     }
-    parseArgs(ARGC, ARGV);
     
-    BRANCH_MULTIPLIER = atof(ARGV[3]);
-    char* pos = ARGV[0];
+    BRANCH_MULTIPLIER = atof(argv[3]);
+    char* pos = argv[0];
     while (strstr(pos, "SigMA") != NULL)
         pos = strstr(pos, "SigMA") + 1;
     pos--;
     char binary_path[1000];
-    strncpy(binary_path, ARGV[0], pos - ARGV[0]);
-    binary_path[int(pos - ARGV[0])] = '\0';
+    strncpy(binary_path, argv[0], pos - argv[0]);
+    binary_path[int(pos - argv[0])] = '\0';
 
     generate_and_read_newick_tree();
 
@@ -61,7 +60,7 @@ int main(int ARGC, char* ARGV[]) {
 
     // Read the pvalue distribution of the various scores and number of segments
     char filename[1000];
-    strcpy(filename, ARGV[4]);
+    strcpy(filename, argv[4]);
     // sprintf(filename, "%smulti_segment_pvalue.txt", binary_path);
     read_multi_pv(filename);
 #ifdef DEBUG
@@ -80,7 +79,7 @@ int main(int ARGC, char* ARGV[]) {
 
     blocks_type blocks;
     /*
-      blocks.read_from_stream(ARGV[2]);
+      blocks.read_from_stream(argv[2]);
       #ifdef DEBUG
       cout << "# Read #blocks=" << blocks.chain.size() << " ; last blocklength= " << blocks.chain[blocks.chain.size()-1]->length << endl;
       #endif
@@ -89,7 +88,7 @@ int main(int ARGC, char* ARGV[]) {
     double pvalue[2 * MAX_NUM_SPECIES];
     Tree* branch_ptr[2 * MAX_NUM_SPECIES];
     int branch=0;
-    compute_pvalue(root, blocks, pvalue, branch, branch_ptr, atoi(ARGV[2]), ARGV[1]);
+    compute_pvalue(root, blocks, pvalue, branch, branch_ptr, atoi(argv[2]), argv[1]);
 
     double max_pvalue = -1;
     Tree* weakest_branch = NULL;
@@ -108,20 +107,37 @@ int main(int ARGC, char* ARGV[]) {
 
 /*--------------------- Helper Functions ------------------ */
 
+void verifyNewickBounds(int pos)
+{
+    if(d_MAX_LENGTH_NEWICK <= pos){
+        fprintf(stderr, "Error, poorly formed newick input from --phylogeny.\n");
+        exit(1);
+    }
+}
+
 Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
-    while (isblank(newick_format[pos]))
+    verifyNewickBounds(pos);
+    while (isblank(newick_format[pos])){
         pos++;
+        verifyNewickBounds(pos);
+    }
     if (newick_format[pos] == '(') {
         pos++;
         Tree* left = read_tree(newick_format, sp_num, pos);
-        while (newick_format[pos] != ':')
+        while (newick_format[pos] != ':'){
             pos++;
+            verifyNewickBounds(pos);
+        }
         pos++;
-        while (isblank(newick_format[pos]))
+        while (isblank(newick_format[pos])){
             pos++;
+            verifyNewickBounds(pos);
+        }
         int start_pos = pos;
-        while (newick_format[pos] != ',')
+        while (newick_format[pos] != ','){
             pos++;
+            verifyNewickBounds(pos);
+        }
         char branch_length[100];
         strncpy(branch_length, newick_format + start_pos, pos-start_pos);
         branch_length[pos - start_pos] = '\0';
@@ -133,14 +149,21 @@ Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
     
         pos++;
         Tree* right = read_tree(newick_format, sp_num, pos);
-        while (newick_format[pos] != ':')
+        while (newick_format[pos] != ':'){
             pos++;
+            verifyNewickBounds(pos);
+        }
         pos++;
-        while (isblank(newick_format[pos]))
+        verifyNewickBounds(pos);
+        while (isblank(newick_format[pos])){
             pos++;
+            verifyNewickBounds(pos);
+        }
         start_pos = pos;
-        while (newick_format[pos] != ')')
+        while (newick_format[pos] != ')'){
             pos++;
+            verifyNewickBounds(pos);
+        }
         strncpy(branch_length, newick_format + start_pos, pos - start_pos);
         branch_length[pos - start_pos] = '\0';
         float right_branch = atof(branch_length);
@@ -150,11 +173,14 @@ Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
             right_branch = MAX_BRANCH_LENGTH; 
     
         pos++;
+        verifyNewickBounds(pos);
         return (new Tree(left, right, left_branch, right_branch));
     }else {
         int start_pos = pos;
-        while (newick_format[pos] != ':')
+        while (newick_format[pos] != ':'){
             pos++;
+            verifyNewickBounds(pos);
+        }
         strncpy(species_name[sp_num], newick_format + start_pos, pos - start_pos);
         species_name[sp_num][pos - start_pos] = '\0';    
         Tree* node = new Tree(sp_num, species_name[sp_num]);
@@ -168,15 +194,15 @@ void generate_and_read_newick_tree() {
 
     int pos = 0;
     species_num = 0;
-    root = read_tree(globalOptions.PHYLOGENY, species_num, pos);
+    root = read_tree(g_options.PHYLOGENY, species_num, pos);
 }
 
 void read_multi_pv(char* filename) {
-    multi_pv = new double*[globalOptions.MAX_SEGMENTS + 1];
-    for (int i = 0; i < globalOptions.MAX_SEGMENTS + 1; i++)
+    multi_pv = new double*[g_options.MAX_SEGMENTS + 1];
+    for (int i = 0; i < g_options.MAX_SEGMENTS + 1; i++)
         multi_pv[i] = new double[int(MAX_TOTAL_SCORE - MIN_TOTAL_SCORE + 1)];
 
-    for (int i = 0; i < (globalOptions.MAX_SEGMENTS + 1); i++)
+    for (int i = 0; i < (g_options.MAX_SEGMENTS + 1); i++)
         for (int j = 0; j < (MAX_TOTAL_SCORE - MIN_TOTAL_SCORE + 1); j++)
             multi_pv[i][j]=-1;
   
@@ -191,7 +217,7 @@ void read_multi_pv(char* filename) {
     }
     while (ifs) {
         ifs >> a >> b >> c;
-        if ((a <= globalOptions.MAX_SEGMENTS) && (b <= MAX_TOTAL_SCORE) && (b >= MIN_TOTAL_SCORE)) {
+        if ((a <= g_options.MAX_SEGMENTS) && (b <= MAX_TOTAL_SCORE) && (b >= MIN_TOTAL_SCORE)) {
             //      if (b<0.5) c=1; 
             multi_pv[a][b - MIN_TOTAL_SCORE] = c;
         }
@@ -245,31 +271,31 @@ void usage(void)
 
     fprintf(stderr, "\nOPTIONS\n");
     fprintf(stderr, "   --phylogeny       input phylogeny in newick format default = %s\n", 
-            globalOptions.PHYLOGENY);
-    fprintf(stderr, "   --refSpecies      reference species default = %s\n", globalOptions.REF_SPECIES);
+            g_options.PHYLOGENY);
+    fprintf(stderr, "   --refSpecies      reference species default = %s\n", g_options.REF_SPECIES);
     fprintf(stderr, "   --maxBlockSize    maximum total size of contiguous alignment blocks allowed.\n" 
             "                     If the length of one alignment block is larger than value\n"
             "                     assigned, maxBlockSize will be assigned to the actual\n"
             "                     alignment block size."
             " default = %d\n", 
-            globalOptions.MAX_BLOCK_SIZE);
+            g_options.MAX_BLOCK_SIZE);
     fprintf(stderr, "   --maxSegments     max number of high-scoring segments default = %d\n", 
-            globalOptions.MAX_SEGMENTS);
+            g_options.MAX_SEGMENTS);
     fprintf(stderr, "\nThese are used to estimate Karlin-Altschul parameters:\n\n");
     fprintf(stderr, "   --totalNumTuples  max number of tuples to be read per block (after \n"
-            "                     randomization). default = %d\n", globalOptions.TOTAL_NUM_TUPLES);
+            "                     randomization). default = %d\n", g_options.TOTAL_NUM_TUPLES);
     fprintf(stderr, "   --totalIterateParam  number of times that Karlin-Altschul parameter \n"
-            "                     is computed. default = %d\n", globalOptions.TOTAL_ITERATE_PARAM);
+            "                     is computed. default = %d\n", g_options.TOTAL_ITERATE_PARAM);
     exit(1);
 }
 
 void loadDefaultParameters(void)
 {
-    strcpy(globalOptions.PHYLOGENY, "(((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)");
-    strcpy(globalOptions.REF_SPECIES, "hg");
+    strcpy(g_options.PHYLOGENY, "(((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)");
+    strcpy(g_options.REF_SPECIES, "hg");
 }
 
-void parseArgs(int argc, char **argv)
+int parseArgs(int argc, char **argv)
 {
     static const char *optString = "vh?";
     static const struct option longOpts[] = {
@@ -287,36 +313,47 @@ void parseArgs(int argc, char **argv)
     };
     int longIndex;
     int opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
+    int numInputFiles = argc - 1;
     while(opt != -1){
         switch(opt) {
         case 0:
             if(strcmp("phylogeny", longOpts[longIndex].name) == 0){
-                if (!sscanf(optarg, "%4095s", globalOptions.PHYLOGENY)){
+                if (!sscanf(optarg, "%4095s", g_options.PHYLOGENY)){
                     fprintf(stderr, "Unable to read --phylogeny\n");
                     exit(1);
                     break;
                 }
+                if (strlen(g_options.PHYLOGENY) == (unsigned) d_MAX_LENGTH_NEWICK - 1){
+                    fprintf(stderr, "Unable to read --phylogeny, too large!\n");
+                    exit(1);
+                    break;
+                }
             }else if(strcmp("refSpecies", longOpts[longIndex].name) == 0){
-                if (!sscanf(optarg, "%31s", globalOptions.REF_SPECIES)){
+                if (!sscanf(optarg, "%31s", g_options.REF_SPECIES)){
                     fprintf(stderr, "Unable to read --refSpecies\n");
                     exit(1);
                     break;
                 }
+                if (strlen(g_options.REF_SPECIES) == (unsigned) d_MAX_LENGTH_REF_SPECIES - 1){
+                    fprintf(stderr, "Unable to read --refSpecies, too large!\n");
+                    exit(1);
+                    break;
+                }
             }else if(strcmp("maxBlockSize", longOpts[longIndex].name) == 0){
-                globalOptions.MAX_BLOCK_SIZE = atoi(optarg);
+                g_options.MAX_BLOCK_SIZE = atoi(optarg);
                 break;
             }else if(strcmp("maxSegments", longOpts[longIndex].name) == 0){
-                globalOptions.MAX_SEGMENTS = atoi(optarg);
+                g_options.MAX_SEGMENTS = atoi(optarg);
                 break;
             }else if(strcmp("totalNumTuples", longOpts[longIndex].name) == 0){
-                globalOptions.TOTAL_NUM_TUPLES = atoi(optarg);
+                g_options.TOTAL_NUM_TUPLES = atoi(optarg);
                 break;
             }else if(strcmp("totalIterateParam", longOpts[longIndex].name) == 0){
-                globalOptions.TOTAL_ITERATE_PARAM = atoi(optarg);
+                g_options.TOTAL_ITERATE_PARAM = atoi(optarg);
                 break;
             }
         case 'v':
-            globalOptions.verbose++;
+            g_options.verbose++;
             break;
         case '?':
         case 'h':
@@ -326,7 +363,9 @@ void parseArgs(int argc, char **argv)
             break;
         }
         opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
-        // globalOptions.inputFiles = argv + optind;
-        // globalOptions.numInputFiles = argc - optind;
+        // g_options.inputFiles = argv + optind;
+        // g_options.numInputFiles = argc - optind;
+        numInputFiles = argc - optind;
     }
+    return numInputFiles;
 }

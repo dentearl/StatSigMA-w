@@ -14,7 +14,10 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-struct globalOptions_t{
+#define d_MAX_LENGTH_NEWICK 4096
+#define d_MAX_LENGTH_REF_SPECIES 32
+
+struct g_options_t{
     // maximum total size of contiguous alignment blocks allowed.
     // If the length of one alignment block is larger than value assigned below,
     // MAX_BLOCK_SIZE will be assigned to the actual alignment block size.
@@ -30,7 +33,9 @@ struct globalOptions_t{
     char *REF_SPECIES;
     int verbose;
 };
-globalOptions_t globalOptions = {100000, 100000, 50000, 100, (char *) malloc(4096), (char *) malloc(32), 0};
+g_options_t g_options = {100000, 100000, 50000, 100, 
+                         (char *) malloc(d_MAX_LENGTH_NEWICK), 
+                         (char *) malloc(d_MAX_LENGTH_REF_SPECIES), 0};
 
 // maximum total size of contiguous alignment blocks allowed.
 // If the length of one alignment block is larger than value assigned below,

@@ -9,9 +9,9 @@
  *    Amol Prakash and Martin Tompa, "Measuring the Accuracy of Genome-Size Multiple Alignments". Genome Biology, vol. 8, issue 6, June 2007, R124.
  *    Xiaoyu Chen and Martin Tompa, "Comparative assessment of methods for aligning multiple genome sequences". Nature Biotechnology, vol. 28, no. 6, June 2010, 567-572.
  */
-
-#define d_MAX_LENGTH_NEWICK 4096
-#define d_MAX_LENGTH_REF_SPECIES 32
+#ifndef TREE_COMBINE_H_
+#define TREE_COMBINE_H_
+#include "global_combine.h"
 
 int g_NUM_SPECIES = 0; // determined at runtime
 class Tree;
@@ -30,31 +30,22 @@ int name2branch(char* name) {
 }
 
 class Tree {
-
  public:
-
     int left_num;
     int right_num;
-
     Tree* left_subtree;
     Tree* right_subtree;
     Tree* parent;
-
     char tree_name[1024];
-
     bool is_any_present;
     bool is_both_present;
     bool is_all_present;
-
     Tree(char* sp_name);
     Tree(Tree* l, Tree* r);
     ~Tree();
-  
     void fill_present();
     void init_present();
 };
-
-
 void Tree::init_present() {
     is_any_present = is_both_present = is_all_present = false;
     if (left_subtree) {
@@ -62,8 +53,6 @@ void Tree::init_present() {
         right_subtree->init_present();
     }
 }
-
-
 void Tree::fill_present() {
     if (left_subtree) {
         left_subtree->fill_present();
@@ -72,55 +61,44 @@ void Tree::fill_present() {
             is_both_present = true;
         else
             is_both_present = false;
-
         if (left_subtree->is_any_present || right_subtree->is_any_present)
             is_any_present = true;
         else
             is_any_present = false;
-
         if (left_subtree->is_all_present && right_subtree->is_all_present)
             is_all_present = true;
         else
             is_all_present = false;
     }
 }
-
-
 Tree::Tree(char* sp_name) {
     left_subtree = NULL;
     right_subtree = NULL;
     parent = NULL;
     strcpy(tree_name, sp_name);
 }
-
-
 Tree::Tree(Tree* l, Tree* r) {
     left_subtree = l;
     l->parent = this;
     right_subtree = r;
     r->parent = this;
-
     parent = NULL;
     sprintf(tree_name,"(%s %s)",l->tree_name, r->tree_name);
 }
-
 Tree::~Tree() {
     if (left_subtree) delete left_subtree;
     if (right_subtree) delete right_subtree;
 }
-
-void checkPos(int& pos, unsigned limit)
-{
-    if ((int) limit < pos){
+void checkPos(int& pos, unsigned limit) {
+    if ((int) limit < pos) {
         cerr << "Error, pos > phylogeny length (" << pos 
              << " > " << limit << ")" << "." << endl
              << "This can be caused by a newick parsing error. Try removing spaces from tree." << endl;
         exit(1);
     }
 }
-
 Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
-    while (isblank(newick_format[pos])){
+    while (isblank(newick_format[pos])) {
         pos++;
         checkPos(pos, strlen(newick_format));
     }
@@ -128,18 +106,18 @@ Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
         pos++;
         checkPos(pos, strlen(newick_format));
         Tree* left = read_tree(newick_format, sp_num, pos);
-        while (newick_format[pos] != ':'){
+        while (newick_format[pos] != ':') {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
         pos++;
         checkPos(pos, strlen(newick_format));
-        while (isblank(newick_format[pos])){
+        while (isblank(newick_format[pos])) {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
         int start_pos = pos;
-        while (newick_format[pos] != ','){
+        while (newick_format[pos] != ',') {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
@@ -152,18 +130,18 @@ Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
         pos++;
         checkPos(pos, strlen(newick_format));
         Tree* right = read_tree(newick_format, sp_num, pos);
-        while (newick_format[pos] != ':'){
+        while (newick_format[pos] != ':') {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
         pos++;
         checkPos(pos, strlen(newick_format));
-        while (isblank(newick_format[pos])){
+        while (isblank(newick_format[pos])) {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
         start_pos = pos;
-        while (newick_format[pos] != ')'){
+        while (newick_format[pos] != ')') {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
@@ -175,10 +153,9 @@ Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
         pos++;
         checkPos(pos, strlen(newick_format));
         return (new Tree(left, right));
-    }
-    else {
+    } else {
         int start_pos = pos;
-        while (newick_format[pos] != ':'){
+        while (newick_format[pos] != ':') {
             pos++;
             checkPos(pos, strlen(newick_format));
         }
@@ -190,11 +167,9 @@ Tree* read_tree(char* newick_format, int& sp_num, int& pos) {
         return node;
     }
 }
-
 void assign_branch_num(Tree* node) {
     Tree* ll = node->left_subtree;
     Tree* rr = node->right_subtree;
-    
     if (node == root) {
         node->left_num = node->right_num = branch_num;
         list_of_branches[branch_num] = ll;
@@ -204,8 +179,7 @@ void assign_branch_num(Tree* node) {
         if (rr->left_subtree == NULL)
             strcpy(species_name[branch_num], rr->tree_name);
         branch_num++;
-    }
-    else {
+    } else {
         node->left_num = branch_num;
         list_of_branches[branch_num] = ll;
         // cout << branch_num << " " << ll->tree_name << endl;
@@ -224,8 +198,7 @@ void assign_branch_num(Tree* node) {
     if (rr->left_subtree) assign_branch_num(rr);
 }
 
-unsigned countSpecies(Tree *node)
-{
+unsigned countSpecies(Tree *node) {
     // walks a tree and counts the number of leafs
     Tree* l = node->left_subtree;
     Tree* r = node->right_subtree;
@@ -234,8 +207,7 @@ unsigned countSpecies(Tree *node)
     return (countSpecies(l) + countSpecies(r));
 }
 
-int countNodes(Tree *node)
-{
+int countNodes(Tree *node) {
     // walks a tree and counts the number of nodes
     // based on the walking method present in assign_branch_num
     if (node == NULL)
@@ -244,19 +216,19 @@ int countNodes(Tree *node)
     Tree* r = node->right_subtree;
     static int i = 0;
     int leftNum = 0, rightNum = 0, c = 0;
-    if (node == root){
-        if (g_options.printAll){
+    if (node == root) {
+        if (g_options.printAll) {
             cout << setw(2) << i << "\t" << l->tree_name << endl;
             ++i;
         }
         ++c;
-    }else{
-        if (g_options.printAll){
+    } else {
+        if (g_options.printAll) {
             cout << setw(2) << i << "\t" << l->tree_name << endl;
             ++i;
         }
         ++c;
-        if (g_options.printAll){
+        if (g_options.printAll) {
             cout << setw(2) << i << "\t" << r->tree_name << endl;
             ++i;
         }
@@ -270,12 +242,12 @@ int countNodes(Tree *node)
 void read_newick_tree(void) {
     int pos = 0;
     species_num = 0;
-    root = read_tree(g_options.PHYLOGENY, species_num, pos);
+    root = read_tree(g_options.phylogeny, species_num, pos);
     g_NUM_SPECIES = countNodes(root);
-    list_of_branches = (Tree **) malloc(g_NUM_SPECIES * sizeof(Tree *));
-    species_name = (char**) malloc(g_NUM_SPECIES * sizeof(char *));
-    for (int i = 0; i < g_NUM_SPECIES; i++){
-        species_name[i] = (char *) malloc(32);
+    list_of_branches = new Tree*[g_NUM_SPECIES];
+    species_name = new char*[g_NUM_SPECIES];
+    for (int i = 0; i < g_NUM_SPECIES; i++) {
+        species_name[i] = new char[32];
         strcpy(species_name[i], "\0");
     }
     branch_num = 0;
@@ -283,46 +255,37 @@ void read_newick_tree(void) {
 }
 
 bool is_OnPathToHuman(int leaf, int edge) {
-
     Tree* start = list_of_branches[leaf];
-    Tree* ref = list_of_branches[name2branch(g_options.REF_SPECIES)];
+    Tree* ref = list_of_branches[name2branch(g_options.refSpecies)];
     Tree* e = list_of_branches[edge];
-
     // Storing path from human to root
-
     Tree* path1[100];
     int len1 = 0;
-
     Tree* temp = ref;
     path1[len1++] = temp;
     while (temp->parent != NULL) {
         temp = temp->parent;
         path1[len1++] = temp;
     }
-
-
     // found denotes the common parent of that leaf and human
     // locate found from human's ancestors
     temp = start;
-    int found=-1;
-    for (int i = 0;i < len1;i++)
+    int found = -1;
+    for (int i = 0; i < len1; i++)
         if (temp == path1[i]) found = i;
-  
     // locate found from leaf's ancestors,
     // also check whether edge is an ancestor of leaf
     do {
         // edge is an ancestor of leaf --> true
         if (temp == e) return true;
         temp = temp->parent;
-        for (int i = 0;i < len1;i++)
+        for (int i = 0; i < len1; i++)
             if (temp == path1[i]) found = i;
-    } while (found==-1);
-
+    } while (found == -1);
     // searching from human to found, check whether edge is on the path
     // ignoring the edge incident on the common parent (i.e. i = found is not considered)
-    for (int i = 0;i < found;i++)
+    for (int i = 0; i < found; i++)
         if (path1[i] == e) return true;
-
     return false;
 }
 
@@ -332,9 +295,7 @@ void insert_inner_branches(bool *cur_sp) {
     // Set according to cur_sp
     for (int i = 0; i < branch_num; i++)
         list_of_branches[i]->is_both_present = list_of_branches[i]->is_any_present = cur_sp[i];
-
-    Tree* ref = list_of_branches[name2branch(g_options.REF_SPECIES)];
-
+    Tree* ref = list_of_branches[name2branch(g_options.refSpecies)];
     // Going up from human, and filling each sibling subtree
     Tree* temp = ref;
     Tree* prev;
@@ -346,17 +307,14 @@ void insert_inner_branches(bool *cur_sp) {
             prev->left_subtree->fill_present();
         temp = prev;
     }
-
     // Now going up from reference species (i.e. human), and filling each on that path
     Tree* path[100];
     int len = 0;
-
     temp = ref;
     while (temp != NULL) {
         path[len++] = temp;
         temp = temp->parent;
     }
-
     // When judging if a internal branch is present, 
     // the refernce species is not counted.
     // For each node on the path from reference species to the root,
@@ -365,7 +323,6 @@ void insert_inner_branches(bool *cur_sp) {
     bool is_parent_present = false; // arbitrary initialization
     while (len > 1) {
         Tree* p = path[len - 1];
-
         // when p->left_subtree is on the path
         if (p->left_subtree == path[len - 2]) {
             // starting at root, where there is no sibling
@@ -373,31 +330,30 @@ void insert_inner_branches(bool *cur_sp) {
                 // left subtree's properties is assigned by its sibling's properties.
                 p->left_subtree->is_both_present = p->right_subtree->is_both_present;
                 is_parent_present = p->left_subtree->is_any_present = p->right_subtree->is_any_present; 
-            }
-            // There is sibling
-            else {
+            } else {
+                // There is sibling
                 // left subtree's properties is determined by those of its sibling and its ancestors' siblings.
-                p->left_subtree->is_both_present = (is_parent_present && p->right_subtree->is_any_present);
-                is_parent_present = p->left_subtree->is_any_present = (is_parent_present || p->right_subtree->is_any_present);
+                p->left_subtree->is_both_present = (is_parent_present && 
+                                                    p->right_subtree->is_any_present);
+                is_parent_present = p->left_subtree->is_any_present = (is_parent_present || 
+                                                                       p->right_subtree->is_any_present);
             }
-        }
-
-        // when p->right_subtree is on the path,
-        // similar to p->left_subtree is on the path
-        else {
+        } else {
+            // when p->right_subtree is on the path,
+            // similar to p->left_subtree is on the path
             if (p == root) {
                 p->right_subtree->is_both_present = p->left_subtree->is_both_present;
                 is_parent_present = p->right_subtree->is_any_present =  p->left_subtree->is_any_present;
             }
             else {
-                p->right_subtree->is_both_present = (is_parent_present && p->left_subtree->is_any_present);
-                is_parent_present = p->right_subtree->is_any_present = (is_parent_present || p->left_subtree->is_any_present);
+                p->right_subtree->is_both_present = (is_parent_present && 
+                                                     p->left_subtree->is_any_present);
+                is_parent_present = p->right_subtree->is_any_present = (is_parent_present || 
+                                                                        p->left_subtree->is_any_present);
             }
         }
-    
         len--;
     }
-
     // Only update from false -> true (Not from true -> false)
     // So it won't affect the branch leading to leaves (i.e. human).
     for (int s = 0; s < branch_num; s++)
@@ -424,14 +380,13 @@ void check_gapped_branches(bool *cur_sp) {
             Tree* temp = currTree;
             // check current tree's sibling and the sibling of each ancestor of current tree.
             while (temp != root) {
-                Tree* prt = temp->parent;	
+                Tree* prt = temp->parent;
                 if (temp == prt->left_subtree) {
                     if (!(prt->right_subtree->is_all_present)) {
                         allGaps = false;
                         break;
                     }
-                }
-                else {
+                } else {
                     if (!(prt->left_subtree->is_all_present)) {
                         allGaps = false;
                         break;
@@ -440,7 +395,8 @@ void check_gapped_branches(bool *cur_sp) {
                 temp = prt;
             }
         }
-
         cur_sp[s] = allGaps;
     }
 }
+
+#endif // TREE_COMBINE_H_

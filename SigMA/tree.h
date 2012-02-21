@@ -28,7 +28,7 @@ class Tree {
     Tree* left_subtree;
     Tree* right_subtree;
     Tree* parent;
-    double prob[c_ALPHABET_SIZE + 1];
+    double prob[kAlphabetSize + 1];
     int is_leaf_num;
     int leaf_startnum;
     int leaf_endnum;
@@ -64,7 +64,7 @@ bool Tree::all_equal_prob() {
 int Tree::max_prob() {
     int max_val = -1;
     double max_prob = 0;
-    for (int i = 1; i < c_ALPHABET_SIZE; i++)
+    for (int i = 1; i < kAlphabetSize; i++)
         if (prob[i] >= max_prob) {
             max_prob = prob[i];
             max_val = i;
@@ -106,30 +106,30 @@ Tree::~Tree() {
 }
 void Tree::compute_prob() {
     if (is_leaf_num >= 0) {
-        for (int i = 1; i <= c_ALPHABET_SIZE; i++)
+        for (int i = 1; i <= kAlphabetSize; i++)
             prob[i] = 0;
         if (nucleotide == c_RANDOM)
-            for (int i = 1; i <= c_ALPHABET_SIZE; i++)
+            for (int i = 1; i <= kAlphabetSize; i++)
                 prob[i] = 1;
         else
             prob[nucleotide] = 1;
     } else {
         left_subtree->compute_prob();
         right_subtree->compute_prob();    
-        for (int i = 1; i <= c_ALPHABET_SIZE; i++) {
+        for (int i = 1; i <= kAlphabetSize; i++) {
             double left_prod = 0;
             double right_prod = 0;
             if (!left_subtree->non_ortho)
-                for (int j = 1; j <= c_ALPHABET_SIZE; j++)
+                for (int j = 1; j <= kAlphabetSize; j++)
                     left_prod += left_subtree->prob[j] * evolution_prob(i, j, left_branchlength);
             else
-                for (int j = 1; j <= c_ALPHABET_SIZE; j++)
+                for (int j = 1; j <= kAlphabetSize; j++)
                     left_prod += left_subtree->prob[j] * g_back[j];
             if (!right_subtree->non_ortho)
-                for (int j = 1; j <= c_ALPHABET_SIZE; j++)
+                for (int j = 1; j <= kAlphabetSize; j++)
                     right_prod += right_subtree->prob[j] * evolution_prob(i, j, right_branchlength);
             else
-                for (int j = 1; j <= c_ALPHABET_SIZE; j++)
+                for (int j = 1; j <= kAlphabetSize; j++)
                     right_prod += right_subtree->prob[j] * g_back[j];
             prob[i] = left_prod * right_prod;
             // Make sure this is right
@@ -148,10 +148,10 @@ double Tree::return_prob() {
             right_subtree->all_equal_prob() || 
             left_subtree->non_ortho || 
             right_subtree->non_ortho)
-            return (right_subtree->return_prob())*(left_subtree->return_prob());
+            return (right_subtree->return_prob()) * (left_subtree->return_prob());
     }
     double ff = 0;
-    for (int i = 1; i <= c_ALPHABET_SIZE; i++)
+    for (int i = 1; i <= kAlphabetSize; i++)
         ff += prob[i] * g_back[i];
     //  cout << "returned " << is_leaf_num << "\t" << prob[1] << "\t" << prob[2] << "\t" << prob[3] << "\t" << prob[4] << "\t" << prob[5] << "\t" << ff << endl;
     return ff;

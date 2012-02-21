@@ -16,17 +16,17 @@
 #include <math.h>
 
 #ifdef PROTEIN
-  const int c_ALPHABET_SIZE = 21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
+  const int kAlphabetSize = 21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
   const int c_GAP = 21;
 #include "protmat.h"
 #else
-  const int c_ALPHABET_SIZE = 5;     // A=1, C=2, G=3, T=4, gap=5
+  const int kAlphabetSize = 5;     // A=1, C=2, G=3, T=4, gap=5
   const int c_GAP = 5;
 #endif // PROTEIN
 
 const int c_RANDOM = 0;
 const int c_NON_ORTHO = 100;
-float g_back[c_ALPHABET_SIZE + 1];
+float g_back[kAlphabetSize + 1];
 float evolution_prob(int node1, int node2, float branchlength) {
   /*
   if (node1 == GAP)

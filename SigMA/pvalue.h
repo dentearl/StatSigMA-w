@@ -64,7 +64,7 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
     for (int i = 0; i < (max_score - min_score + 1); i++)
         score_dist[i] = 0;
   
-    double num_tuples = pow(c_ALPHABET_SIZE, g_NUM_SPECIES);
+    double num_tuples = pow(kAlphabetSize, g_NUM_SPECIES);
     int total_computations = 0;
     debug("Comparison of number of tuples, all=%d, block_len=%d\n", 
           num_tuples, blocks.chain[0]->length);
@@ -74,8 +74,8 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
     
         for (int num = 0; num < num_tuples; num++) {
             for (int k = 0; k < g_NUM_SPECIES; k++)
-                list_of_leaves[k]->nucleotide = (int(num / pow(c_ALPHABET_SIZE, g_NUM_SPECIES - k - 1))) % 
-                    (c_ALPHABET_SIZE) + 1;
+                list_of_leaves[k]->nucleotide = (int(num / pow(kAlphabetSize, g_NUM_SPECIES - k - 1))) % 
+                    (kAlphabetSize) + 1;
             root->compute_prob();
             double ortho_pv = root->return_prob();
             double non_ortho_pv;

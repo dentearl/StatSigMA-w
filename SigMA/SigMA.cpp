@@ -207,11 +207,11 @@ void read_multi_pv(char* filename) {
 void init_background() {
     g_back[0] = 0;
 #ifdef PROTEIN
-    for (int i = 1; i < c_ALPHABET_SIZE; i++)
+    for (int i = 1; i < kAlphabetSize; i++)
         g_back[i] = aa_back[i - 1] * (1 - kGapBackground);
 #else
-    for (int i = 1; i < c_ALPHABET_SIZE; i++)
-        g_back[i] = (1. - kGapBackground - g_back[0]) / float(c_ALPHABET_SIZE - 1.);
+    for (int i = 1; i < kAlphabetSize; i++)
+        g_back[i] = (1. - kGapBackground - g_back[0]) / float(kAlphabetSize - 1.);
 #endif
     g_back[c_GAP] = kGapBackground;
 }

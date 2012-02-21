@@ -11,88 +11,65 @@
 */
 // #define DEBUG
 
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#ifndef GLOBAL_H_
+#define GLOBAL_H_
 
-#define d_MAX_LENGTH_NEWICK 4096
-#define d_MAX_LENGTH_REF_SPECIES 32
+const int kMaxFilePath = 1024;
+const int kMaxLengthNewick = 4096;
+const int kMaxLengthRefSpecies = 32;
+const int kMaxLengthMessage = 1024;
 
 struct g_options_t{
+    char *mafFile;
+    int branchIndex;
+    char *multipvFile;
+    double branchMultiplier;
     // maximum total size of contiguous alignment blocks allowed.
     // If the length of one alignment block is larger than value assigned below,
     // MAX_BLOCK_SIZE will be assigned to the actual alignment block size.
-    int MAX_BLOCK_SIZE;
+    int maxBlockSize;
     // max number of high-scoring segments
-    int MAX_SEGMENTS;
+    int maxSegments;
     // These are used to estimate Karlin-Altschul parameters:
     // max number of tuples to be read per block (after randomization)
-    int TOTAL_NUM_TUPLES;
+    int totalNumberTuples;
     // number of times that Karlin-Altschul parameter is computed 
-    int TOTAL_ITERATE_PARAM;
-    char *PHYLOGENY;
-    char *REF_SPECIES;
+    int totalIterateParam;
+    char *phylogeny;
+    char *refSpecies;
     int verbose;
+    bool debug;
+    unsigned rseed; // random seed.
 };
-g_options_t g_options = {100000, 100000, 50000, 100, 
-                         (char *) malloc(d_MAX_LENGTH_NEWICK), 
-                         (char *) malloc(d_MAX_LENGTH_REF_SPECIES), 0};
+g_options_t g_options = {new char[kMaxFilePath],
+                         0, new char[kMaxFilePath], 1.0,
+                         100000, 100000, 50000, 100,
+                         new char[kMaxLengthNewick],
+                         new char[kMaxLengthRefSpecies], 0, false, 0};
 
-// maximum total size of contiguous alignment blocks allowed.
-// If the length of one alignment block is larger than value assigned below,
-// MAX_BLOCK_SIZE will be assigned to the actual alignment block size.
-//int MAX_BLOCK_SIZE = 100000;
-         
-// max number of high-scoring segments
-//const int MAX_SEGMENTS = 100000;  
-
-// These are used to estimate Karlin-Altschul parameters:
-//
-// max number of tuples to be read per block (after randomization)
-//const int TOTAL_NUM_TUPLES = 50000;
-// number of times that Karlin-Altschul parameter is computed 
-//const int TOTAL_ITERATE_PARAM = 100;
-
-// phylogenetic tree
-//char PHYLOGENY[]="(((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)";
-
-// reference species
-//const char REF_SPECIES[]="hg";
-
-
-// ****************** No change below *********************
-
-// chromosome length
-int CHR_LEN;
-// The start chromosome position of alignment
-int CHR_START;
-// the length of alignment
-int ALIGN_LEN;
+int g_CHR_LEN; // chromosome length
+int g_CHR_START; // The start chromosome position of alignment
+int g_ALIGN_LEN; // the length of alignment
 
 // Parameters for the divide & conquer algo, 
 // which estimates a pvalue for each segment:
 //
-// pvalue threshold
-float PV_THRESH_DVDCQ = 1e-5;
-// the max number of contexts 
-const int MAX_NUM_CONTEXT = 10000;
+
+float g_PV_THRESH_DVDCQ = 1e-5; // pvalue threshold
+const int kMaxNumberContexts = 10000; // the max number of contexts 
 
 // Estimating parameters
-const int SCORE_BINS = 1000;
-const int MAX_TOTAL_SCORE = 100;
-const int MIN_TOTAL_SCORE = -100;
-const float SUBSTITUTION_PER_SITE = 1;
-const float GAP_BACKGRD = 0.05;
-const float MAX_BRANCH_LENGTH = 10000;
+const int kScoreBins = 1000;
+const int kMaxTotalScore = 100;
+const int kMinTotalScore = -100;
+const float kSubstitutionPerSite = 1;
+const float kGapBackground = 0.05;
+const float kMaxBranchLength = 10000;
 // Divide by length; this value is added to each score unit
-const int PSEUDOCOUNT_NORMALISATION = 100;       
+const int kMaxNumberBranches = 1000; // largest number of branches allowed in a tree
 
-const int MAX_NUM_SPECIES = 1000;
+int g_NUM_SPECIES = kMaxNumberBranches;
+char g_SPECIES_NAMES[kMaxNumberBranches][32];
+double** g_MULTI_PV;
 
-// Global variables
-int species_num = MAX_NUM_SPECIES;
-char species_name[MAX_NUM_SPECIES][20];
-double** multi_pv;
-
-double BRANCH_MULTIPLIER = 1;
-
-#endif
+#endif // GLOBAL_H_

@@ -9,90 +9,77 @@
  *    Amol Prakash and Martin Tompa, "Measuring the Accuracy of Genome-Size Multiple Alignments". Genome Biology, vol. 8, issue 6, June 2007, R124.
  *    Xiaoyu Chen and Martin Tompa, "Comparative assessment of methods for aligning multiple genome sequences". Nature Biotechnology, vol. 28, no. 6, June 2010, 567-572.
 */
-#ifndef ALPHA_H
-#define ALPHA_H
+#ifndef ALPHA_H_
+#define ALPHA_H_
 
 #include "global.h"
 #include <math.h>
 
-
 #ifdef PROTEIN
-  const int ALPHABET_SIZE = 21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
-  const int GAP = 21;
+  const int c_ALPHABET_SIZE = 21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
+  const int c_GAP = 21;
 #include "protmat.h"
-
 #else
-  const int ALPHABET_SIZE = 5;     // A=1, C=2, G=3, T=4, gap=5
-  const int GAP = 5;
-#endif
+  const int c_ALPHABET_SIZE = 5;     // A=1, C=2, G=3, T=4, gap=5
+  const int c_GAP = 5;
+#endif // PROTEIN
 
-
-const int RANDOM = 0;
-const int NON_ORTHO = 100;
-float back[ALPHABET_SIZE + 1];
-
-
-
+const int c_RANDOM = 0;
+const int c_NON_ORTHO = 100;
+float g_back[c_ALPHABET_SIZE + 1];
 float evolution_prob(int node1, int node2, float branchlength) {
   /*
-  if (node1==GAP)
-    return (node1==node2) ? 1 : 0;
-  else if (node1==node2)
+  if (node1 == GAP)
+    return (node1 == node2) ? 1 : 0;
+  else if (node1 == node2)
     return (exp(-SUBSTITUTION_PER_SITE*branchlength)+(1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2])+
  (exp(-SUBSTITUTION_PER_SITE*branchlength)-exp(-0.01*SUBSTITUTION_PER_SITE*branchlength))*GAP_BACKGRD;
-  else if (node2==GAP)
+  else if (node2 == GAP)
     return (1-exp(-0.01*SUBSTITUTION_PER_SITE*branchlength))*back[node2];
   else
     return (1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2];
   */
-
 #ifdef PROTEIN
-
-  if (node1==GAP)
-    return (node1==node2) ? 1 : 0;
-  if (node2==GAP)
-    return (1-exp(-0.01*branchlength))*back[GAP];
-  float m=0;
-  float t=1;
-  for (int i=0;i<MAX_POWERS;i++) {
-    m+=aa_rate_matrix_pow[i][node1-1][node2-1]*t;
-    t*=branchlength;
+  if (node1 == c_GAP)
+    return (node1 == node2) ? 1 : 0;
+  if (node2 == c_GAP)
+    return (1 - exp(-0.01 * branchlength)) * g_back[c_GAP];
+  float m = 0.0;
+  float t = 1.0;
+  for (int i = 0; i < MAX_POWERS; i++) {
+    m += aa_rate_matrix_pow[i][node1 - 1][node2 - 1] * t;
+    t *= branchlength;
   }
-  return (1-((1-exp(-0.01*branchlength))*back[GAP]))*m;
-
-
+  return (1 - ((1 - exp(-0.01 * branchlength)) * g_back[c_GAP])) * m;
 #else
-
   // Amol's old code
-  if (node1==GAP)
-    return (node1==node2) ? 1 : 0;
-  else if (node1==node2)
-    return (exp(-SUBSTITUTION_PER_SITE*branchlength)+(1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2]);
+  if (node1 == c_GAP)
+    return (node1 == node2) ? 1 : 0;
+  else if (node1 == node2)
+    return (exp( -kSubstitutionPerSite * branchlength) + 
+            (1 - exp(-kSubstitutionPerSite * branchlength)) * 
+            g_back[node2]);
   else
-    return (1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2];
-  
+    return (1 - exp(-kSubstitutionPerSite * branchlength)) * g_back[node2];
   /*
   // try to allow insertion, not successful!
   // Lead to problems in KA parameter estimation
-  if (node1==GAP)
+  if (node1 == GAP)
     // gap -> gap
-    if (node1==node2) 
+    if (node1 == node2) 
       return 1 - (4*(1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[GAP]);
     // gap -> A/C/G/T
     else
       return (1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[GAP];
   // A/C/G/T -> itself
-  else if (node1==node2)
+  else if (node1 == node2)
     return (exp(-SUBSTITUTION_PER_SITE*branchlength)+(1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2]);
   // A/C/G/T -> other nucleotide or gap
   else
     return (1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2];
   */
-
-#endif
+#endif // PROTEIN
 }
-
-
 #ifdef PROTEIN
 int alpha2int(char a) {
   switch (a) {
@@ -116,9 +103,9 @@ int alpha2int(char a) {
   case 'W' : return 18; break;
   case 'Y' : return 19; break;
   case 'V' : return 20; break;
-  case '-' : return GAP; break;
-  case '.' : return GAP; break;
-  default: return RANDOM; break;
+  case '-' : return c_GAP; break;
+  case '.' : return c_GAP; break;
+  default: return c_RANDOM; break;
   }
 }
 #else
@@ -128,17 +115,10 @@ int alpha2int(char a) {
   case 'C' : return 2; break;
   case 'G' : return 3; break;
   case 'T' : return 4; break;
-  case '-' : return GAP; break;  
-  case '.' : return GAP; break;  
-  default: return RANDOM; break;
+  case '-' : return c_GAP; break;  
+  case '.' : return c_GAP; break;  
+  default: return c_RANDOM; break;
   }
 }    
-#endif
-
-
-
-
-
-
-
-#endif
+#endif // PROTEIN
+#endif // ALPHA_H_

@@ -5,7 +5,7 @@
 Xiaoyu Chen, Amol Prakash, Martin Tompa. All of University of Washington.
 
 ## Adaptor
-[Dent Earl](https://github.com/dentearl/). Of UC Santa Cruz. Dent Earl adapted the StatSigMA-w code to allow parameters to be changed on the command line.
+[Dent Earl](https://github.com/dentearl/). Of UC Santa Cruz. Dent Earl adapted the StatSigMA-w code to allow parameters to be changed on the command line and to add input file verification steps.
 
 I. StatSigMAw v2 
 
@@ -13,16 +13,18 @@ I. StatSigMAw v2
 
     This package has two major programs: SigMA and combine. We also provide a supplementary program, getSpeciesName. The function and usage of these programs are described in doc/execute.txt.
 
-
 II. How to install
 
     Information about installing the programs is listed in doc/install.txt.
-
 
 III. Command lines and outputs
 
     Detailed help on function, usage, command line and output for each program are described in doc/execute.txt.
 
+Assumptions on input alignments:
+* The reference species must be present in every block.
+* There may be no duplicate species in any block. A species may be present only once per block.
+* The blocks must be ordered such that there is a monotonic increase in position relative to the reference sequence.
 
 IV. More about parameter setting
 
@@ -38,7 +40,6 @@ V. Running time
     For ENCODE region ENm002 (1 Mbp), the running time of SigMA on all 53 branches is 23-24 hours (26-27 minutes per branch on average), depending on the branch multiplier; the running time of combine is 35 minutes.
 
     The computer on which we ran these two examples has a 2.33GHz CPU and a 4G memeory. 
-
 
 VI. Conditions of Use
 

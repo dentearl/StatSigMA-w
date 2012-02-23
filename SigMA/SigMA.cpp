@@ -232,6 +232,13 @@ void usage(void) {
             "the default tree provided in our code has 53 branches, and the \n"
             "branch index ranges between 0-52.  We will then run \n"
             "StatSigMAw (53 * 3) = 159 times.\n");
+    
+    fprintf(stderr, "\nASSUMPTIONS\n");
+    fprintf(stderr, "  * The reference species must be present in every block.\n"
+            "  * There may be no duplicate species in any block. A species may be \n"
+            "    present only once per block.\n"
+            "  * The blocks must be ordered such that there is a monotonic increase \n"
+            "    in position relative to the reference sequence.\n");
 
     fprintf(stderr, "\nOUTPUT\n");
     fprintf(stderr, "The program generates the output to stdout, which includes information\n"

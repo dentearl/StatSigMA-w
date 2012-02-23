@@ -9,13 +9,13 @@ Xiaoyu Chen, Amol Prakash, Martin Tompa. All of University of Washington.
 
 ## I. StatSigMAw v2 
 
-    Given a multiple sequence alignment and a phylogeny relating the aligned sequences, StatSigMAw assesses every site of the alignment and identifies suspiciously aligned regions in the alignment. 
+Given a multiple sequence alignment and a phylogeny relating the aligned sequences, StatSigMAw assesses every site of the alignment and identifies suspiciously aligned regions in the alignment. 
 
-    This package has two major programs: SigMA and combine. We also provide a supplementary program, getSpeciesName. The function and usage of these programs are described in doc/execute.txt.
+This package has two major programs: SigMA and combine. We also provide a supplementary program, getSpeciesName. The function and usage of these programs are described in doc/execute.txt.
 
 ## II. How to install
 
-    Information about installing the programs is listed in doc/install.txt.
+Information about installing the programs is listed in doc/install.txt.
 
 ## III. Command lines and outputs
 
@@ -52,8 +52,8 @@ Xiaoyu Chen, Amol Prakash, and Martin Tompa give permission for Dent Earl and hi
 3. Any risk associated with using the StatSigmMA-w software at your institution is with you and your institution.
 
 4. StatSigmMA-w will be cited in any publication(s) reporting on data obtained from it as:
-    Amol Prakash and Martin Tompa, "Measuring the Accuracy of Genome-Size Multiple Alignments". Genome Biology, vol. 8, issue 6, June 2007, R124.
-    Xiaoyu Chen and Martin Tompa, "Comparative assessment of methods for aligning multiple genome sequences". Nature Biotechnology, vol. 28, no. 6, June 2010, 567-572.
+  * Amol Prakash and Martin Tompa, "Measuring the Accuracy of Genome-Size Multiple Alignments". Genome Biology, vol. 8, issue 6, June 2007, R124.
+  * Xiaoyu Chen and Martin Tompa, "Comparative assessment of methods for aligning multiple genome sequences". Nature Biotechnology, vol. 28, no. 6, June 2010, 567-572.
 
 ## References
 * Amol Prakash and Martin Tompa, "Measuring the Accuracy of Genome-Size Multiple Alignments". Genome Biology, vol. 8, issue 6, June 2007, R124. doi:10.1186/gb-2007-8-6-r124 http://genomebiology.com/2007/8/6/r124

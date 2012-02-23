@@ -78,7 +78,7 @@ void read_Present() {
             set_G_IsPresent(i, s, false);
     int cur_pos = 0;
     int cur_len = 0;
-    bool cur_g_isPresent[branch_num];
+    bool *cur_g_isPresent = new bool[branch_num];
     for (int s = 0; s < branch_num; s++)
         cur_g_isPresent[s] = false; 
     ifstream ifs(g_options.mafFile);
@@ -87,7 +87,7 @@ void read_Present() {
         exit(EXIT_FAILURE);
     }
     debug("Opening maf %s\n", g_options.mafFile);
-    char buffer[g_MAX_BLOCK_SIZE];
+    char *buffer = new char[g_MAX_BLOCK_SIZE];
     // boolb firstBlock = true;
     // int start_pos = 0;
     while (ifs) {
@@ -125,6 +125,8 @@ void read_Present() {
             }
         }
     }
+    delete [] cur_g_isPresent;
+    delete [] buffer;
     ifs.close();
 }
 void read_Gaps() {
@@ -134,7 +136,7 @@ void read_Gaps() {
   
     int cur_pos = 0;
     int cur_len = 0;
-    char buffer[g_MAX_BLOCK_SIZE];
+    char *buffer = new char[g_MAX_BLOCK_SIZE];
     bool **cur_g_isGaps;
     cur_g_isGaps = new bool*[branch_num];
     for (int s = 0; s < branch_num; s++)
@@ -147,7 +149,7 @@ void read_Gaps() {
         buffer[0]='\0';
         ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8) == 0) || (!ifs)) {      
-            bool tmp_g_isGaps[branch_num];
+            bool *tmp_g_isGaps = new bool[branch_num];
             for (int i = 0; i < cur_len; i++) {
                 for (int s = 0; s < branch_num; s++)
                     tmp_g_isGaps[s] = cur_g_isGaps[s][i];
@@ -155,6 +157,7 @@ void read_Gaps() {
                 for (int s = 0; s < branch_num; s++)
                     set_Gap(cur_pos + i, s, tmp_g_isGaps[s]);
             }
+            delete [] tmp_g_isGaps;
             // Reset
             cur_pos += cur_len;
             for (int s = 0; s < branch_num; s++)
@@ -189,6 +192,7 @@ void read_Gaps() {
     for (int s = 0; s < branch_num; s++)
         delete [] cur_g_isGaps[s];
     delete [] cur_g_isGaps;
+    delete [] buffer;
 }
 
 bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& right_nearest, double& pv) {
@@ -352,7 +356,7 @@ void read_pv_dist(char* branch_multiplier, int sp) {
 void scan_alignFile() {
     g_ALIGN_LEN = 0;
     int cur_len = 0;
-    char buffer[g_MAX_BLOCK_SIZE];
+    char *buffer = new char[g_MAX_BLOCK_SIZE];
     bool firstBlock = true;
     int currStart = 0;
     int currNtNum = 0;
@@ -391,12 +395,13 @@ void scan_alignFile() {
         }
     }
     ifs.close();
+    delete [] buffer;
 }
 
 void map_humanCoordinates() {
     int cumStart = 0;
     int cur_len = 0;
-    char buffer[g_MAX_BLOCK_SIZE];
+    char *buffer = new char[g_MAX_BLOCK_SIZE];
     bool firstBlock = true;
     char *orient;
     int currHgPos = 0;
@@ -452,6 +457,7 @@ void map_humanCoordinates() {
         }
     }
     ifs.close();
+    delete [] buffer;
 }
 
 int main(int argc, char* argv[]) {
@@ -542,7 +548,9 @@ int main(int argc, char* argv[]) {
             set_PV(i, f * 3);
     }
   
-    int count[branch_num + 1][3];
+    int **count = new int*[branch_num + 1];
+    for (int i = 0; i < 3; ++i)
+        count[i] = new int[3];
     for (int sp = 0; sp < branch_num + 1; sp++) {
         count[sp][0] = count[sp][1] = count[sp][2] = 0;
         for (int i = 0; i < g_ALIGN_LEN; i++)
@@ -638,11 +646,17 @@ int main(int argc, char* argv[]) {
         }
     }
   
+    
     // Output summary
     for (int sp = 0; sp < branch_num + 1; sp++)
         printf("my_count %d %d %d(%4.2f%%) %d\n", sp, count[sp][0], count[sp][1], 
                count[sp][1] * 100.0 / float(count[sp][0]), count[sp][2]);
     cout << "printed count" << endl; 
+    
+    for (int i = 0; i < branch_num + 1; ++i)
+        delete [] count[i];
+    delete [] count;
+    
     exit(EXIT_SUCCESS);
 }
 

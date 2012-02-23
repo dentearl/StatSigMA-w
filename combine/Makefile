@@ -2,7 +2,7 @@ shell:=/bin/bash -e
 export SHELLOPTS=pipefail
 includes := global_combine.h tree_combine.h
 
-CPPFLAGS = -O2 -g -Wall -Werror
+CPPFLAGS = -O2 -g -Wall -Werror -pedantic
 
 .PHONY = all clean test
 all: ../bin/combine ../bin/getSpeciesName

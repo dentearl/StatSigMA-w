@@ -2,7 +2,7 @@
 (c) 2007-2012 The Authors, see LICENSE for details.
 
 ## Authors
-Xiaoyu Chen, Amol Prakash, Martin Tompa. All of University of Washington.
+Xiaoyu Chen, Amol Prakash, [Martin Tompa](http://www.cs.washington.edu/homes/tompa/). All of University of Washington.
 
 ## Adaptor
 [Dent Earl](https://github.com/dentearl/) of UC Santa Cruz. Dent Earl adapted the StatSigMA-w code to allow parameters to be changed on the command line and to add input file verification steps.

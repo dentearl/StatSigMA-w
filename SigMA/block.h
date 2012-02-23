@@ -12,42 +12,51 @@
 #ifndef BLOCK_H_
 #define BLOCK_H_
 
-#include "alpha.h"
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <list>
-#include <string.h>
-#include <stdlib.h>
+#include "alpha.h"
 #include "common.h"
+#include "global.h"
 
 using namespace std;
 using namespace __gnu_cxx;
 
-int name2species(char* name) { 
+int name2species(char *name) { 
     for (int i = 0; i < g_NUM_SPECIES; i++)
         if (strncmp(name, g_SPECIES_NAMES[i], strlen(g_SPECIES_NAMES[i])) == 0)
             return i;
     return -1;
 }
+int sum(bool *a) {
+    // take an array of bools and return the sum of their values.
+    int s = 0;
+    for (unsigned i = 0; i < sizeof(a) / sizeof(a[0]); ++i)
+        s += a[i];
+    return s;
+}
 class single_block {
  public:
-    int** block;
+    int **block;
     int length;
     int start;
     int align_start;
-    int human_ref;
+    int reference;
     list<double> block_score;
     single_block() {
         length = 0;
         start = 0;
         align_start = 0;
-        human_ref = -1;
+        reference = -1;
         block = new int*[g_options.maxBlockSize];
         for (int i = 0; i < g_options.maxBlockSize; i++) {
             block[i] = new int[g_NUM_SPECIES];
             for (int j = 0; j < g_NUM_SPECIES; j++)
-                block[i][j] = c_RANDOM;
+                block[i][j] = kRandom;
         }
     }
     ~single_block() {
@@ -60,17 +69,28 @@ class blocks_type {
  public:
     vector<single_block*> chain;
     int total_length;
-    blocks_type() {total_length = 0;}
+    bool containsReference;
+    unsigned lineNumber; // line number within the maf
+    unsigned currentPosition; // current position on the reference species chromosome
+    blocks_type() {
+        total_length = 0;
+        containsReference = false;
+        lineNumber = 0;
+    }
     bool read_from_stream(char* filename);
     bool read_single_from_maf(ifstream& ifs);
 };
 bool blocks_type::read_single_from_maf(ifstream& ifs) {
+    /* Reads one block out of the maf file pointed to by ifs and 
+     * makes it available in
+     */
+    // printf("read_single_from_maf()\n");
     single_block* seq1;
     single_block* seq2;
     if (chain.size() == 0) {
         seq1 = new single_block;
-        chain.push_back(seq1);
         seq2 = new single_block;
+        chain.push_back(seq1);
         chain.push_back(seq2);
     } else {
         seq1 = chain[0];
@@ -82,23 +102,29 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         seq1->length = seq2->length;
         seq1->block_score = seq2->block_score;
         seq1->start = seq2->start;
-        seq1->human_ref = seq2->human_ref;
+        seq1->reference = seq2->reference;
     }
     total_length = g_CHR_LEN; // Every time make block_length = chr_len (used to compute statistics)
-    char *buffer = new char[g_options.maxBlockSize + 1];
+    size_t bufferLen = g_options.maxBlockSize + kMinLineLength;
+    char *buffer = new char[bufferLen];
     buffer[0] = '\0';
-    bool isSuccess = 0;
+    bool isSuccess = false;
     int pos = -1;
     do {
         for (int i = 0; i < g_options.maxBlockSize; i++)
             for (int j = 0; j < g_NUM_SPECIES; j++)
-                seq2->block[i][j] = c_RANDOM;
-        seq2->human_ref = -1;
+                seq2->block[i][j] = kRandom;
+        seq2->reference = -1;
         seq2->length = 0;
         seq2->start = 0;
         while (ifs && (buffer[0] != 'a')) {
             buffer[0] = '\0';
-            ifs.getline(buffer, g_options.maxBlockSize);
+            ifs.getline(buffer, bufferLen);
+            ++lineNumber;
+            if (ifs.fail() && !ifs.eof()) {
+                cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
+                exit(EXIT_FAILURE);
+            }
         }
         char* str1 = strtok(buffer, "=");
         if (str1) {
@@ -107,24 +133,48 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             seq2->block_score.push_back(atof(str1));
         }
         buffer[0] = '\0';
-        ifs.getline(buffer, g_options.maxBlockSize);
+        ifs.getline(buffer, bufferLen);
+        ++lineNumber;
+        if (ifs.fail() && !ifs.eof()) {
+            cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        containsReference = false;
+        bool *speciesPresent = new bool[g_NUM_SPECIES]();
         while ((ifs) && (buffer[0] != 'a')) {
             if (buffer[0] == 's') {
                 int sp = name2species(buffer + 2);
-                isSuccess = 1;
+                if (!speciesPresent[sp]) {
+                    speciesPresent[sp] = true;
+                    // cout << "read " << g_SPECIES_NAMES[sp] << endl;
+                }
+                else {
+                    cerr << "Error, a block in the maf file (near line number " << lineNumber 
+                         << ") contains a duplicate species, " << g_SPECIES_NAMES[sp] << endl;
+                    exit(EXIT_FAILURE);
+                }
                 if (0 <= sp) {
-                    char* str = strtok(buffer," "); // s
-                    str = strtok(NULL," "); // name
-                    str = strtok(NULL," "); // start
-                    int coord = atoi(str);
+                    char* str = strtok(buffer, " "); // s
+                    str = strtok(NULL, " "); // name
+                    str = strtok(NULL, " "); // start
+                    int start = atoi(str);
                     if (strncmp(buffer + 2, g_options.refSpecies, strlen(g_options.refSpecies)) == 0) {
-                        seq2->start = coord;
-                        seq2->human_ref = sp;
+                        seq2->start = start;
+                        seq2->reference = sp;
+                        containsReference = true;
+                        isSuccess = true;
+                        if (seq2->start < seq1->start + seq1->length) {
+                            cerr << "Error, detected a block where the reference either "
+                                "contains a duplicated position or is out of order near line "
+                                "number " << lineNumber << endl;
+                            exit(EXIT_FAILURE);
+                        }
                     }
-                    str = strtok(NULL," "); // length
-                    str = strtok(NULL," "); // strand
-                    str = strtok(NULL," "); // source length
-                    str = strtok(NULL," "); // alignment field
+                    str = strtok(NULL, " "); // length
+                    str = strtok(NULL, " "); // strand
+                    str = strtok(NULL, " "); // source length
+                    str = strtok(NULL, " "); // alignment field
                     int len = strlen(str);
                     for (int m = 0; m < len; m++)
                         seq2->block[m][sp] = alpha2int(toupper(str[m]));
@@ -134,19 +184,29 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             buffer[0] = '\0';
             // record the position of pointer
             pos = ifs.tellg();
-            ifs.getline(buffer, g_options.maxBlockSize);
+            ifs.getline(buffer, bufferLen);
+            ++lineNumber;
+            if (ifs.fail() && !ifs.eof()) {
+                cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (!containsReference && sum(speciesPresent)) {
+            cerr << "Error, a block in the maf (preceding line number " << lineNumber 
+                 << ") fails to contain the reference species." << endl;
+            exit(EXIT_FAILURE);
         }
         int chars = 0;
         for (int i = 0; i < seq1->length; i++)
-            if ((seq1->human_ref != -1) && (seq1->block[i][seq1->human_ref] != c_GAP))
+            if ((seq1->reference != -1) && (seq1->block[i][seq1->reference] != kGap))
                 chars++;
-        debug("# Reading sc=%d\t"
+        debug("Reading sc=%d\t"
               "old_non_gap_char=%d\t"
               "new_seq_start=%d\t"
               "new_seq_length=%d\t"
               "old_human=%d\t"
               "new_human=%d\n", *(seq2->block_score.begin()), chars, seq2->start, 
-              seq2->length, seq1->human_ref, seq2->human_ref);
+              seq2->length, seq1->reference, seq2->reference);
         if (((chars == 0) || (chars + seq1->start == seq2->start)) 
             && (seq1->length + seq2->length < g_options.maxBlockSize)
             && (0 < seq2->start)) {
@@ -155,11 +215,11 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
                     seq1->block[i + seq1->length][j] = seq2->block[i][j];
             seq1->length += seq2->length;
             seq1->block_score.push_back(*(seq2->block_score.begin()));
-            seq1->human_ref = seq2->human_ref;
+            seq1->reference = seq2->reference;
             if (chars == 0)
                 seq1->start = seq2->start;
             seq2->length = 0;
-            debug("# Joined to the previous segment with total length = %d\n", seq1->length);
+            debug("Joined to the previous segment with total length = %d\n", seq1->length);
         }
     } while (ifs && (seq2->length == 0));
     if (ifs && (pos != -1)) {
@@ -172,35 +232,40 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
 
 bool blocks_type::read_from_stream(char* filename) {
     ifstream ifs(filename);
-    char *buffer = new char[g_options.maxBlockSize + 1];
-    bool isSuccess = 0;
-    if (strstr(filename,".maf")) {
-        debug("# Reading .maf file %s\n", filename);
+    size_t bufferLen = g_options.maxBlockSize + kMinLineLength;
+    char *buffer = new char[bufferLen];
+    bool isSuccess = false;
+    if (strstr(filename, ".maf")) {
+        debug("Reading .maf file %s\n", filename);
         while (ifs) {
-            buffer[0]='\0';
-            while (ifs && (ifs.getline(buffer, g_options.maxBlockSize))
-                   &&(buffer[0] != 's'))
+            buffer[0] = '\0';
+            while (ifs && (ifs.getline(buffer, bufferLen))
+                   && (buffer[0] != 's'))
                 continue;
             single_block* seq = new single_block;
             while ((ifs) && (buffer[0] == 's')) {
                 int sp = name2species(buffer + 2);
-                isSuccess = 1;
+                isSuccess = true;
                 if (0 <= sp) {
-                    char* str = strtok(buffer," ");
-                    str = strtok(NULL," ");
-                    str = strtok(NULL," ");
+                    char* str = strtok(buffer, " "); // s
+                    str = strtok(NULL, " "); // name
+                    str = strtok(NULL, " "); // start
                     // int start = atoi(str);
-                    str = strtok(NULL," ");
-                    str = strtok(NULL," ");
-                    str = strtok(NULL," ");
-                    str = strtok(NULL," ");
+                    str = strtok(NULL, " "); // length
+                    str = strtok(NULL, " "); // strand
+                    str = strtok(NULL, " "); // source length
+                    str = strtok(NULL, " "); // sequence
                     int len = strlen(str);
-                    for (int m = 0;m<len;m++)
-                        seq->block[m][sp]=alpha2int(toupper(str[m]));
+                    for (int m = 0; m < len; m++)
+                        seq->block[m][sp] = alpha2int(toupper(str[m]));
                     seq->length = len;
                 }
-                buffer[0]='\0';
-                ifs.getline(buffer, g_options.maxBlockSize);
+                buffer[0] = '\0';
+                ifs.getline(buffer, bufferLen);
+                if (ifs.fail() && !ifs.eof()) {
+                    cerr << "Error, failbit has been set" << endl;
+                    exit(EXIT_FAILURE);
+                }
             }
             if (0 < seq->length) {
                 chain.push_back(seq);
@@ -209,12 +274,16 @@ bool blocks_type::read_from_stream(char* filename) {
         }
     
         return isSuccess;
-    } else if (strstr(filename,".fa")) {
-        debug("# Reading .fasta file %s\n", filename);
+    } else if (strstr(filename, ".fa")) {
+        debug("Reading .fasta file %s\n", filename);
         int sp = -1;
         single_block* seq = new single_block;
         while (ifs) {
-            ifs.getline(buffer, g_options.maxBlockSize);
+            ifs.getline(buffer, bufferLen);
+            if (ifs.fail() && !ifs.eof()) {
+                cerr << "Error, failbit has been set" << endl;
+                exit(EXIT_FAILURE);
+            }
             if (buffer[0] == '>') {
                 char* a = strtok(buffer + 1, " ");
                 while(!a)
@@ -223,7 +292,7 @@ bool blocks_type::read_from_stream(char* filename) {
                 seq->length = 0;
             }
             else if (sp>=0) {
-                isSuccess = 1;
+                isSuccess = true;
                 for (unsigned i = 0; i < strlen(buffer); i++)
                     seq->block[seq->length + i][sp] = alpha2int(toupper(buffer[i]));
                 seq->length+=strlen(buffer);
@@ -236,18 +305,22 @@ bool blocks_type::read_from_stream(char* filename) {
         }
         return isSuccess;
     } else if (strstr(filename, ".msf")) {
-        debug("# Reading .msf file %s\n", filename);
+        debug("Reading .msf file %s\n", filename);
         int cur_length = 0;
         int firstspecies=-1;
         single_block* seq = new single_block;
         while (ifs) {
-            int sp=-1;
-            ifs.getline(buffer, g_options.maxBlockSize);
+            int sp = -1;
+            ifs.getline(buffer, bufferLen);
+            if (ifs.fail() && !ifs.eof()) {
+                cerr << "Error, failbit has been set" << endl;
+                exit(EXIT_FAILURE);
+            }
             char* name = strtok(buffer, " ");
             if (name)
                 sp = name2species(name);
             if (sp >= 0) {
-                isSuccess = 1;
+                isSuccess = true;
                 if (firstspecies == -1)
                     firstspecies = sp;
                 else if (firstspecies == sp)

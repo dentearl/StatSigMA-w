@@ -87,6 +87,7 @@ int main(int argc, char* argv[]) {
             weakest_branch = branch_ptr[i];
         }
     }
+    verbose("Number of blocks skipped due to missing reference: %d\n", g_NUM_BLOCKS_SKIPPED);
     cout << "p-value= " << max_pvalue << "\tbranch= " << weakest_branch->tree_name 
          << "\ttree = " << root->tree_name << endl;
     return EXIT_SUCCESS;
@@ -130,7 +131,6 @@ Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
         left_branch *= g_options.branchMultiplier;
         if (left_branch > kMaxBranchLength) 
             left_branch = kMaxBranchLength;
-    
         pos++;
         Tree* right = read_tree(newick_format, sp_num, pos);
         while (newick_format[pos] != ':') {
@@ -155,7 +155,6 @@ Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
         right_branch *= g_options.branchMultiplier;
         if (right_branch > kMaxBranchLength) 
             right_branch = kMaxBranchLength; 
-    
         pos++;
         verifyNewickBounds(pos);
         return (new Tree(left, right, left_branch, right_branch));
@@ -182,11 +181,9 @@ void read_multi_pv(char* filename) {
     g_MULTI_PV = new double*[g_options.maxSegments + 1];
     for (int i = 0; i < g_options.maxSegments + 1; i++)
         g_MULTI_PV[i] = new double[int(kMaxTotalScore - kMinTotalScore + 1)];
-
     for (int i = 0; i < (g_options.maxSegments + 1); i++)
         for (int j = 0; j < (kMaxTotalScore - kMinTotalScore + 1); j++)
             g_MULTI_PV[i][j]=-1;
-  
     for (int j = kMinTotalScore; j <= kMaxTotalScore; j++)
         g_MULTI_PV[1][j - kMinTotalScore] = 1 - exp(-1 * exp(-1 * j));
     ifstream ifs(filename);
@@ -212,8 +209,8 @@ void init_background() {
 #else
     for (int i = 1; i < kAlphabetSize; i++)
         g_back[i] = (1. - kGapBackground - g_back[0]) / float(kAlphabetSize - 1.);
-#endif
-    g_back[c_GAP] = kGapBackground;
+#endif // PROTEIN
+    g_back[kGap] = kGapBackground;
 }
 void usage(void) {
     fprintf(stderr, "Usage: SigMA <maf file> <branch index> <branch multiplier> <pvale dist file>[options]\n\n");

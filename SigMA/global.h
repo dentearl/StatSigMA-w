@@ -18,6 +18,7 @@ const int kMaxFilePath = 1024;
 const int kMaxLengthNewick = 4096;
 const int kMaxLengthRefSpecies = 32;
 const int kMaxLengthMessage = 1024;
+const int kMinLineLength = 1024;
 
 struct g_options_t{
     char *mafFile;
@@ -71,5 +72,6 @@ const int kMaxNumberBranches = 1000; // largest number of branches allowed in a 
 int g_NUM_SPECIES = kMaxNumberBranches;
 char g_SPECIES_NAMES[kMaxNumberBranches][32];
 double** g_MULTI_PV;
+int g_NUM_BLOCKS_SKIPPED = 0; // count of blocks due to missing reference
 
 #endif // GLOBAL_H_

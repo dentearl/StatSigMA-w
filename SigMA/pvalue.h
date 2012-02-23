@@ -23,17 +23,17 @@ using namespace std;
 using namespace __gnu_cxx;
 
 struct final_seg_type {
-    double score;       // segment score
+    double score; // segment score
     int start;
     int end;
     int align_start;
     int align_end;
     double pv;
     double pv2;
-    int block_num;       // Block number from reading maf
-    int nearest_left;    // position of left nearest significant segment
-    int nearest_right;   // position of right nearest significant segment
-    int block_score;     //  list < double> block_score;
+    int block_num; // Block number from reading maf
+    int nearest_left; // position of left nearest significant segment
+    int nearest_right; // position of right nearest significant segment
+    int block_score; //  list < double> block_score;
     int left_end;
     int right_end;
     final_seg_type() {pv = -1;}
@@ -61,7 +61,7 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
              << endl;
         exit(EXIT_FAILURE);
     }
-    for (int i = 0; i < (max_score - min_score + 1); i++)
+    for (int i = 0; i < (max_score - min_score + 1); ++i)
         score_dist[i] = 0;
   
     double num_tuples = pow(kAlphabetSize, g_NUM_SPECIES);
@@ -72,14 +72,14 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
         total_computations = 10000; // default value
         debug("Computing all scores %d\n", num_tuples);
     
-        for (int num = 0; num < num_tuples; num++) {
-            for (int k = 0; k < g_NUM_SPECIES; k++)
+        for (int num = 0; num < num_tuples; ++num) {
+            for (int k = 0; k < g_NUM_SPECIES; ++k)
                 list_of_leaves[k]->nucleotide = (int(num / pow(kAlphabetSize, g_NUM_SPECIES - k - 1))) % 
                     (kAlphabetSize) + 1;
             root->compute_prob();
             double ortho_pv = root->return_prob();
             double non_ortho_pv;
-            if (parent->max_prob() == c_GAP)
+            if (parent->max_prob() == kGap)
                 non_ortho_pv = ortho_pv;
             else {
                 node->non_ortho = true;
@@ -87,14 +87,18 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
                 non_ortho_pv = root->return_prob();
                 node->non_ortho = false;
             }
-            int score = ((ortho_pv == 0)||(non_ortho_pv == 0)) ? 0 : int(round(log(ortho_pv / non_ortho_pv) * kScoreBins));
+            int score = 0;
+            if ((ortho_pv == 0) || (non_ortho_pv == 0))
+                score = 0;
+            else
+                score = int(round(log(ortho_pv / non_ortho_pv) * kScoreBins));
             if (score < min_score) score = min_score;
             if (score > max_score) score = max_score;
             score_dist[score - min_score] += non_ortho_pv;
         }
     } else {
         /*
-          for (int i = 0; i < max_score - min_score + 1; i++)
+          for (int i = 0; i < max_score - min_score + 1; ++i)
           score_dist[i] += double(PSEUDOCOUNT_NORMALISATION)/(blocks.chain[0]->length*(max_score - min_score));
         */
         debug("Computing sequence specific scores max(N^2, %d) where "
@@ -113,49 +117,49 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
             exit(EXIT_FAILURE);
         }
         int good1 = 0, good2 = 0;
-        for (int i = 0; i < g_options.maxBlockSize; i++)
+        for (int i = 0; i < g_options.maxBlockSize; ++i)
             good_tuple1[i] = good_tuple2[i] = -1;
 
-        for (int l1 = 0; l1 < blocks.chain[bl1]->length; l1++) {
-            for (int i = 0; i < node->leaf_startnum; i++)
-                if (blocks.chain[bl1]->block[l1][i] != c_RANDOM)
+        for (int l1 = 0; l1 < blocks.chain[bl1]->length; ++l1) {
+            for (int i = 0; i < node->leaf_startnum; ++i)
+                if (blocks.chain[bl1]->block[l1][i] != kRandom)
                     good_tuple1[good1] = l1;
-            for (int i = node->leaf_endnum + 1; i < g_NUM_SPECIES; i++)
-                if (blocks.chain[bl1]->block[l1][i] != c_RANDOM)
+            for (int i = node->leaf_endnum + 1; i < g_NUM_SPECIES; ++i)
+                if (blocks.chain[bl1]->block[l1][i] != kRandom)
                     good_tuple1[good1] = l1;
             if (good_tuple1[good1] == l1) good1++;
       
         }
-        for (int l2 = 0; l2 < blocks.chain[bl2]->length; l2++) {
-            for (int i = node->leaf_startnum; i <= node->leaf_endnum; i++)
-                if (blocks.chain[bl2]->block[l2][i] != c_RANDOM)
+        for (int l2 = 0; l2 < blocks.chain[bl2]->length; ++l2) {
+            for (int i = node->leaf_startnum; i <= node->leaf_endnum; ++i)
+                if (blocks.chain[bl2]->block[l2][i] != kRandom)
                     good_tuple2[good2] = l2;
             if (good_tuple2[good2] == l2) good2++;
         }
         debug("Good1 %d\n", good1);
         debug("Good2 %d\n", good2);
         if ((good1 > 0) && (good2 > 0)) {      
-            for (int tp = 0; tp < g_options.totalNumberTuples; tp++) {
+            for (int tp = 0; tp < g_options.totalNumberTuples; ++tp) {
                 // random choose a tuple from good_tuple1 and good_tuple2
                 int goodID1 = (int)(rand() / (((double)RAND_MAX + 1) / good1));
                 int goodID2 = (int)(rand() / (((double)RAND_MAX + 1) / good2));
                 int l1 = good_tuple1[goodID1];
                 int l2 = good_tuple2[goodID2];
-                if (total_computations % 10000 == 0)
+                if ((total_computations + 1) % 10000 == 0)
                     debug("Tuples read = %d\n",total_computations + 1);
                 total_computations++;
-                for (int i = 0; i < node->leaf_startnum; i++)
+                for (int i = 0; i < node->leaf_startnum; ++i)
                     list_of_leaves[i]->nucleotide = blocks.chain[bl1]->block[l1][i];
-                for (int i = node->leaf_startnum; i<=node->leaf_endnum; i++)
+                for (int i = node->leaf_startnum; i<=node->leaf_endnum; ++i)
                     list_of_leaves[i]->nucleotide = blocks.chain[bl2]->block[l2][i];
-                for (int i = node->leaf_endnum + 1; i < g_NUM_SPECIES; i++)
+                for (int i = node->leaf_endnum + 1; i < g_NUM_SPECIES; ++i)
                     list_of_leaves[i]->nucleotide = blocks.chain[bl1]->block[l1][i];
       
                 root->compute_prob();
                 double ortho_pv = root->return_prob();
       
                 double non_ortho_pv;
-                if (parent->max_prob() == c_GAP)
+                if (parent->max_prob() == kGap)
                     non_ortho_pv = ortho_pv;
                 else {
                     node->non_ortho = true;
@@ -163,7 +167,11 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
                     non_ortho_pv = root->return_prob();
                     node->non_ortho = false;
                 }
-                int score=((ortho_pv == 0)||(non_ortho_pv == 0)) ? 0 : int(log(ortho_pv / non_ortho_pv) * kScoreBins);
+                int score = 0;
+                if ((ortho_pv == 0) || (non_ortho_pv == 0))
+                    score = 0;
+                else
+                    score = int(log(ortho_pv / non_ortho_pv) * kScoreBins);
                 // cout << "\t" << score << "  " << ortho_pv << " " << non_ortho_pv << endl;
                 if (score < min_score) score = min_score;
                 if (score > max_score) score = max_score;
@@ -178,14 +186,14 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
     }
     int new_max = 0;
     int new_min = 0;
-    for (int i = 0; i < max_score - min_score + 1; i++)
+    for (int i = 0; i < max_score - min_score + 1; ++i)
         if (score_dist[i] != 0) {
             if (i + min_score > new_max)
                 new_max = i + min_score;
             if (i + min_score < new_min)
                 new_min = i + min_score;
         }
-    for (int i = 0; i < new_max - new_min + 1; i++)
+    for (int i = 0; i < new_max - new_min + 1; ++i)
         score_dist[i] = score_dist[i - min_score + new_min];
     debug("Finished score distribution\n");
     debug("%s", timeStamp());
@@ -234,6 +242,10 @@ void scan_alignFile(char* mafFile) {
     while (ifs) {
         buffer[0] = '\0';
         ifs.getline(buffer, tempSize);
+        if (ifs.fail() && !ifs.eof()) {
+            cerr << "Error, failbit has been set while scanning " << mafFile << endl;
+            exit(EXIT_FAILURE);
+        }
         ++linesRead;
         if ((strncmp(buffer, "a score=", 8) == 0) || (!ifs)) {
             // make sure g_options.maxBlockSize >= actual alignment block size
@@ -253,20 +265,20 @@ void scan_alignFile(char* mafFile) {
                     is_reference = true;
                 if (!is_reference)
                     continue;
-                a = strtok(buffer," ");
-                a = strtok(NULL," ");
-                a = strtok(NULL," ");
+                a = strtok(buffer," "); // s
+                a = strtok(NULL," "); // name
+                a = strtok(NULL," "); // start
                 if (firstBlock) {
                     g_CHR_START = atoi(a);
                     firstBlock = false;
                 }
                 last_pos = atoi(a);
-                a = strtok(NULL," ");
+                a = strtok(NULL," "); // length
                 // get the last genomic position
                 last_pos += atoi(a) - 1;
-                a = strtok(NULL," ");
-                a = strtok(NULL," ");
-                a = strtok(NULL," ");
+                a = strtok(NULL," "); // strand
+                a = strtok(NULL," "); // source length
+                a = strtok(NULL," "); // alignment field
                 cur_len = strlen(a);
             }
         }
@@ -276,12 +288,33 @@ void scan_alignFile(char* mafFile) {
     delete [] buffer;
 }
 
+void printBlock(blocks_type *block) {
+    // function for debugging.
+    printf("##############################\n");
+    for (int i = 0; i < g_options.maxBlockSize; i++)
+        for (int j = 0; j < g_NUM_SPECIES; j++)
+            if (block->chain[0]->block[i][j] != 0)
+                printf("%d%s", block->chain[0]->block[i][j], (j == g_NUM_SPECIES - 1) ? "\n" : ", ");
+            else
+                printf(" %s", (j == g_NUM_SPECIES - 1) ? "\n" : ", ");
+    printf("##############################\n");
+    for (int i = 0; i < g_options.maxBlockSize; i++)
+        for (int j = 0; j < g_NUM_SPECIES; j++)
+            if (block->chain[1]->block[i][j] != 0)
+                printf("%d%s", block->chain[1]->block[i][j], (j == g_NUM_SPECIES - 1) ? "\n" : ", ");
+            else
+                printf(" %s", (j == g_NUM_SPECIES - 1) ? "\n" : ", ");
+    printf("##############################\n");
+}
+
 double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char* mafFile) {
+    /* 
+     */
     int max_seg = 6000000; // 6 * 10^6
     final_seg_type* all_seg = new final_seg_type[max_seg + 1];
     scan_alignFile(mafFile);
-    debug("Chromosome start position = %d\n", g_CHR_START);
-    debug("Sequence(non-gap) length = %d\n", g_CHR_LEN);
+    debug("Reference chromosome start position = %d\n", g_CHR_START);
+    debug("Reference sequence(non-gap) length = %d\n", g_CHR_LEN);
     debug("Alignment length = %d\n", g_ALIGN_LEN);
     debug("Max block size = %d\n", g_options.maxBlockSize);
     double K = 0.29;
@@ -293,7 +326,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     double *K_arr = new double[g_options.totalIterateParam];
     double *lambda_arr = new double[g_options.totalIterateParam];
     double *H_arr = new double[g_options.totalIterateParam];
-    blocks_type* blocks_param = new blocks_type;
+    blocks_type *blocks_param = new blocks_type;
     ifstream ifs1(mafFile);
     
     // int runs = 0;
@@ -301,32 +334,44 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     debug("Align length = %d\n", g_ALIGN_LEN);
     int sim_count = 0;
     int block_count = 0;
-    while ((blocks_param->read_single_from_maf(ifs1)) 
-           && (sim_count < g_options.totalIterateParam)) {
+    // printf("going to try to read\n");
+    while ((blocks_param->read_single_from_maf(ifs1)) &&
+           (sim_count < g_options.totalIterateParam)) {
+        // fprintf(stderr, "read one\n");
+        // printBlock(blocks_param);
+        if (!blocks_param->containsReference) {
+            // reference not found in this block, skip
+            ++g_NUM_BLOCKS_SKIPPED;
+            // printf("skipping block\n");
+            continue;
+        }
+        // printf("read okay, blocks_param->chain[0]->length: %d\n", blocks_param->chain[0]->length);
         int currBlockSize = blocks_param->chain[0]->length;
         int currRepNum = (int)(currBlockSize / rate);      
         // if failures, need try more times
         int maxTry = currRepNum * 2;
         int blockSimCount = 0;
-        for (int r = 0; r < maxTry; r++) {	
+        for (int r = 0; r < maxTry; ++r) {	
             if (compute_branch_parameters(node, parent, *blocks_param, K, lambda, H)) {
                 K_arr[sim_count] = K;
                 lambda_arr[sim_count] = lambda;
                 H_arr[sim_count] = H;
-                sim_count++;
-                blockSimCount++;
+                ++sim_count;
+                ++blockSimCount;
                 // get enough estimation from current block
                 if (blockSimCount == currRepNum) 
                     break;
             } else
                 debug("That block didn't work, try again\n");
         }
-        block_count++;
+        ++block_count;
     }
+    // printf("sim_count = %d\n", sim_count);
     delete blocks_param;
     ifs1.close();
+    cout << "# number of blocks skipped due to missing reference= " << g_NUM_BLOCKS_SKIPPED << endl;
     cout << "# number of sigMA blocks= " << block_count << endl;
-    for (int i = 0; i < sim_count; i++) {
+    for (int i = 0; i < sim_count; ++i) {
         K_arr[0] += K_arr[i];
         lambda_arr[0] += lambda_arr[i];
         H_arr[0] += H_arr[i];
@@ -340,23 +385,28 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     H = H_arr[0] / sim_count;
     cout << "# number of sets of parameter computed= " << sim_count << endl;
     int cur_seg = 0;
-    ifstream ifs(mafFile);
+    ifstream ifs(mafFile); // reset mafFile
     pair <int, int> *limit = new pair <int, int>[g_options.maxSegments];
     pair <double, double> *score_left_right = new pair <double, double>[g_options.maxSegments];
     int count = 0;
+    // printf("reading differently\n");
     while (blocks.read_single_from_maf(ifs) && (cur_seg < max_seg)) {
+        if (!blocks.containsReference) {
+            // printf("blocks.containsReference: %s\n", blocks.containsReference ? "true" : "false");
+            continue;
+        }
         int all_good_segments = 0;
         int block_good_segments = 0;
         int bl = 0;
         double cur_score = 0;
-        for (int l = 0; l < blocks.chain[bl]->length; l++) {
-            for (int i = 0; i < g_NUM_SPECIES; i++)
+        for (int l = 0; l < blocks.chain[bl]->length; ++l) {
+            for (int i = 0; i < g_NUM_SPECIES; ++i)
                 list_of_leaves[i]->nucleotide = blocks.chain[bl]->block[l][i];
             root->compute_prob();
             double ortho_pv = root->return_prob();
             double non_ortho_pv;
             int score;
-            if (parent->max_prob() == c_GAP) {
+            if (parent->max_prob() == kGap) {
                 non_ortho_pv = ortho_pv;
                 score = 0;
             } else {
@@ -364,20 +414,23 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                 root->compute_prob();
                 non_ortho_pv = root->return_prob();
                 node->non_ortho = false;
-                int max_score = 10*kScoreBins;
-                int min_score=-10*kScoreBins;
-                score=((ortho_pv==0)||(non_ortho_pv==0)) ? 0 : int(round(log(ortho_pv/non_ortho_pv)*kScoreBins));
+                int max_score = 10 * kScoreBins;
+                int min_score= -10 * kScoreBins;
+                if ((ortho_pv == 0) || (non_ortho_pv == 0))
+                    score = 0;
+                else
+                    score = int(round(log(ortho_pv / non_ortho_pv) * kScoreBins));
                 if (score < min_score) score = min_score;
                 if (score > max_score) score = max_score;
                 // Adjusting for cutting branch for which there is no data, and approximate 
                 // errors in ortho_pv/non_ortho_pv which may not be exactly zero
                 if (root->all_random(node) || node->all_random(NULL))
-                    //	if ((score<=0) && (score>=-50))
+                    //	if ((score <= 0) && (score >= -50))
                     score = 10000 * min_score;
             }
             cur_score += score;
             if (score > 0) {
-                int max_j=-1;
+                int max_j = -1;
                 for (int i = block_good_segments - 1; i >= 0; i--)
                     if ((score_left_right[all_good_segments + i].first < cur_score - score) && (i > max_j))
                         max_j = i;
@@ -392,13 +445,13 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                     score_left_right[all_good_segments + max_j].second = cur_score;
                     limit[all_good_segments + max_j].second = l;
                     block_good_segments = max_j + 1;
-                    int new_max_j=-1;
+                    int new_max_j = -1;
                     bool done = false;
                     do {
-                        for (int i = 0; i < block_good_segments - 1; i++)
-                            if ((score_left_right[all_good_segments + i].first 
-                                 < score_left_right[all_good_segments + block_good_segments - 1].first) 
-                                && (i > new_max_j))
+                        for (int i = 0; i < block_good_segments - 1; ++i)
+                            if ((score_left_right[all_good_segments + i].first <
+                                 score_left_right[all_good_segments + block_good_segments - 1].first) &&
+                                (i > new_max_j))
                                 new_max_j = i;
                         if ((new_max_j == -1)
                             || (score_left_right[all_good_segments + new_max_j].second 
@@ -416,22 +469,22 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
         }
         //    all_good_segments += block_good_segments;
         //    block_good_segments = 0;
-        for (int i = 0; i < block_good_segments; i++)
+        for (int i = 0; i < block_good_segments; ++i)
             if (cur_seg < max_seg) {
                 all_seg[cur_seg].score = score_left_right[i].second - score_left_right[i].first;
                 all_seg[cur_seg].block_num = count;
                 all_seg[cur_seg].block_score = blocks.chain[bl]->block_score.size();
                 int chars = 0;
-                for (int j = 0; j < limit[i].first; j++) {
-                    int p = blocks.chain[bl]->block[j][blocks.chain[bl]->human_ref];
-                    if ((p>=1) && (p<=4))
+                for (int j = 0; j < limit[i].first; ++j) {
+                    int p = blocks.chain[bl]->block[j][blocks.chain[bl]->reference];
+                    if ((p >= 1) && (p <= 4))
                         chars++;
                 }
                 all_seg[cur_seg].start = blocks.chain[bl]->start + chars;
                 all_seg[cur_seg].align_start = blocks.chain[bl]->align_start + limit[i].first;
-                for (int j = limit[i].first; j < limit[i].second; j++) {
-                    int p = blocks.chain[bl]->block[j][blocks.chain[bl]->human_ref];
-                    if ((p>=1) && (p<=4))
+                for (int j = limit[i].first; j < limit[i].second; ++j) {
+                    int p = blocks.chain[bl]->block[j][blocks.chain[bl]->reference];
+                    if ((p >= 1) && (p <= 4))
                         chars++;
                 }
                 all_seg[cur_seg].end = blocks.chain[bl]->start + chars;
@@ -443,11 +496,11 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     ifs.close();
     
     debug("num_segments = %d\n", cur_seg);
-    for (int i = 0; i < cur_seg; i++)
+    for (int i = 0; i < cur_seg; ++i)
         debug("Segment %d\t%f\t%d\t%d\t%d\t%d\n", i, all_seg[i].score, all_seg[i].start,
               all_seg[i].end, all_seg[i].align_start, all_seg[i].align_end);
     pair <int, int>* best_scores = new pair <int, int>[cur_seg];
-    for (int i = 0; i < cur_seg; i++) {
+    for (int i = 0; i < cur_seg; ++i) {
         best_scores[i].first = i;
         best_scores[i].second = (int)all_seg[i].score;
     }
@@ -559,7 +612,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                     // i2: [index, find_right - 1]
                     int i2 = index + (int)(rand() / (((double)RAND_MAX) / (rightNum - 1)));
                     int i_real = 0;
-                    for (int i = 0; i < i2 - i1 + 1; i++)
+                    for (int i = 0; i < i2 - i1 + 1; ++i)
                         if (i1 + i != index)
                             intermediate_scores[i_real++].second = (int)all_seg[i1 + i].score;
                     qsort(intermediate_scores, i2 - i1, sizeof(intermediate_scores[0]), cmpPairInts);
@@ -575,7 +628,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                     if (i1 > 0)
                         total_length -= all_seg[i1 - 1].align_end;
                     double mean_length = log(K*total_length*total_length)/H;
-                    for (int i = 0; i < i2 - i1 + 1; i++) {
+                    for (int i = 0; i < i2 - i1 + 1; ++i) {
                         total_score += (lambda * intermediate_scores[i].second 
                                         - log(K * (total_length - mean_length) 
                                               * (total_length - mean_length)));
@@ -602,11 +655,11 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
             } else {
                 // if true, enumerate all context
                 // for possible context containing the current segment
-                for (int i1 = find_left + 1; i1 <= index; i1++)   // start from the left of i1
-                    for (int i2 = index; i2 < find_right; i2++) { // to the right of i2
+                for (int i1 = find_left + 1; i1 <= index; ++i1)   // start from the left of i1
+                    for (int i2 = index; i2 < find_right; ++i2) { // to the right of i2
 	  
                         int i_real = 0;
-                        for (int i = 0; i < i2 - i1 + 1; i++)
+                        for (int i = 0; i < i2 - i1 + 1; ++i)
                             if (i1 + i != index)
                                 intermediate_scores[i_real++].second = (int)all_seg[i1 + i].score;
                         qsort(intermediate_scores, i2 - i1, sizeof(intermediate_scores[0]), cmpPairInts);
@@ -622,7 +675,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                         if (i1 > 0)
                             total_length -= all_seg[i1 - 1].align_end;
                         double mean_length = log(K * total_length * total_length) / H;
-                        for (int i = 0; i < i2 - i1 + 1; i++) {
+                        for (int i = 0; i < i2 - i1 + 1; ++i) {
                             total_score += (lambda * intermediate_scores[i].second 
                                             - log(K * (total_length - mean_length) 
                                                   * (total_length - mean_length)));
@@ -631,8 +684,8 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                             if (total_normalized_score > kMaxTotalScore) 
                                 total_normalized_score = kMaxTotalScore;
                             // If less than min_score or large number of segments
-                            if ((total_normalized_score < kMinTotalScore) 
-                                || (g_MULTI_PV[i + 1][int(total_normalized_score - kMinTotalScore)] < 0))
+                            if ((total_normalized_score < kMinTotalScore) ||
+                                (g_MULTI_PV[i + 1][int(total_normalized_score - kMinTotalScore)] < 0))
                                 break;
                             if ((g_MULTI_PV[i + 1][int(total_normalized_score - kMinTotalScore)] 
                                  * pow(2, i + 1)) < best_pvalue1)
@@ -670,11 +723,11 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
         } while (cur_best_index < cur_seg);
     }
     cout << "# num_segments = " << cur_seg << endl;
-    cout << "# XXXXX num\tblock_num\tblock_score\tscore start\tend\tpvalue\t"
-         << "nearest_left\tnearest_right\tleft_end\tright_end\tpv2\talign_start\talign_end" << endl;
+    cout << "# XXXXX num\tblock_num\tblock_score\tscore start\tend\tpvalue 1\t"
+         << "nearest_left\tnearest_right\tleft_end\tright_end\tpvalue 2\talign_start\talign_end" << endl;
     int grandtotal = 0;
     int prev_good = 0;
-    for (int i = 0; i < cur_seg; i++) {
+    for (int i = 0; i < cur_seg; ++i) {
         // Before first
         if ((i == 0) && (all_seg[i].align_start != 0)) {
             cout << "# Seg_fis " << i << "\t" << all_seg[i].block_num << "\t" 
@@ -739,7 +792,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
 
 void compute_pvalue(Tree* node, blocks_type& blocks, double* branch_pvalue, 
                     int& branch_num, Tree* branch_ptr[], int branchIndexToProcess, char* mafFile) {
-    /*
+    /* walks the tree recursively, calling compute_pvalue_branch() for each branch in the tree
      */
     if (node->is_leaf_num < 0) {
         Tree* ll = node->left_subtree;

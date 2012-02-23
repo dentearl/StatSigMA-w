@@ -47,7 +47,7 @@ class Tree {
 bool Tree::all_random(Tree* t) {
     if (this == t) return true;
     else if (is_leaf_num >= 0)
-        return (nucleotide == c_RANDOM);
+        return (nucleotide == kRandom);
     return (left_subtree->all_random(t) && right_subtree->all_random(t));
 }
 bool Tree::all_equal_prob() {
@@ -73,8 +73,8 @@ int Tree::max_prob() {
     if (all_equal_prob() || ((is_leaf_num < 0) && 
                              (left_subtree->all_equal_prob() || right_subtree->all_equal_prob())))
         {}
-    else if (max_prob * 0.9 < prob[c_GAP])
-        max_val = c_GAP;
+    else if (max_prob * 0.9 < prob[kGap])
+        max_val = kGap;
     return max_val;
 }
 Tree::Tree(int a, char* sp_name) {
@@ -108,7 +108,7 @@ void Tree::compute_prob() {
     if (is_leaf_num >= 0) {
         for (int i = 1; i <= kAlphabetSize; i++)
             prob[i] = 0;
-        if (nucleotide == c_RANDOM)
+        if (nucleotide == kRandom)
             for (int i = 1; i <= kAlphabetSize; i++)
                 prob[i] = 1;
         else

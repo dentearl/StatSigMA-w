@@ -44,33 +44,27 @@ int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) 
     int i, j, range, lo, hi;
     double up, neww, sum, Sum, av;
     double *p, *P, *ptrP, *ptr1;
-
     /* Check that scores and their associated probabilities are valid     */
     debug("Start Karlin: low=%d high=%d\n", low, high);
-    debug("%s\n", timeStamp());
-
-    if (low >= 0) {
+    debug("%s", timeStamp());
+    if (0 <= low) {
         debug("Lowest score must be negative.\n");
         return 0;
     }
-
     for (i = range = high - low; i > -low && !pr[i]; --i)
         continue;
     if (i <= -low) {
         debug("A positive score must be possible.\n");
         return 0;
     }
-
     for (sum = i = 0; i <= range ; sum += pr[i++]) 
         if (pr[i] < 0) {
             debug("Negative probabilities not allowed.\n");
             return 0;
         }
-
     p = new double[range + 1];
     for (Sum = low , i = 0; i <= range; ++i) 
         Sum += i * (p[i] = pr[i] / sum);
-
 	//////////////////////////////////////////////////////////////
     double *p_sparse = new double[range + 1];
     int *sc_sparse = new int[range + 1];
@@ -78,19 +72,16 @@ int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) 
         p_sparse[i] = 0.0;
         sc_sparse[i] = 0;
     }
-    
 	int num_sparse = 0;
     for (i = 0; i <= range; i++)
         if (p[i] > 0) {
             sc_sparse[num_sparse] = i;
             p_sparse[num_sparse++] = p[i];
         }
-
     if (Sum >= 0.1) {
         debug("Invalid (non-negative) expected score: %f\n", Sum);
         return 0;
     }
-
     /* Calculate the parameter lambda */
     up = 0.125 * (1.0 / kScoreBins);
     do {
@@ -101,8 +92,7 @@ int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) 
     } while (sum < 1.0);
 
     debug("Finished loop1\n");
-    debug("%s\n", timeStamp());
-
+    debug("%s", timeStamp());
     for (*lambda = j = 0; j < 100; ++j) {
         neww = (*lambda + up) / 2.0;
         ptr1 = p;
@@ -113,24 +103,19 @@ int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) 
         else 
             up = neww;
     }
-    
     debug("Finished loop2\n");
-    debug("%s\n", timeStamp());
-
+    debug("%s", timeStamp());
     /* Calculate the pamameter K */
     ptr1 = p;
     for (av = 0, i = low; i <= high; ++i) 
         av += *ptr1++ *i * exp((*lambda) * i);
     *H = *lambda * av / log(2.0);
-
     Sum = lo = hi = 0;
     P = new double[kMaxIterations * range + 1];
 	//////////////////////////////////////////////////////////////////
 	for (i = 0; i < kMaxIterations * range + 1; i++)
         P[i] = 0;
-
     for (*P = sum = j = 1; j <= kMaxIterations && sum > 0.0001; Sum += sum /= j++) {
-
 		ptrP = P;
 		for (int jj = hi - low; jj >= 0;jj--) {
             double mm = ptrP[jj];
@@ -146,17 +131,14 @@ int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) 
             sum += *++ptrP * exp((*lambda) * i);
         for ( ; i <= hi; ++i) sum += *++ptrP;
     }
-
     debug("Finished loop3, number of iterations=%d\n", j);
-    debug("%s\n", timeStamp());
-
+    debug("%s", timeStamp());
     for (i = low; !p[i - low]; ++i)
         continue;
     for (j = -i; i < high && j > 1; ) 
         if (p[++i - low]) 
             j = gcd(j, i);
     *K = (j * exp(-2 * Sum)) / (av * (1.0 - exp(- *lambda * j)));
-
     delete [] p;
     delete [] P;
     delete [] p_sparse;

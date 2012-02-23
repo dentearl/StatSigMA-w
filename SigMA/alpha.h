@@ -17,15 +17,15 @@
 
 #ifdef PROTEIN
   const int kAlphabetSize = 21;     // A=1  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V=20
-  const int c_GAP = 21;
+  const int kGap = 21;
 #include "protmat.h"
 #else
   const int kAlphabetSize = 5;     // A=1, C=2, G=3, T=4, gap=5
-  const int c_GAP = 5;
+  const int kGap = 5;
 #endif // PROTEIN
 
-const int c_RANDOM = 0;
-const int c_NON_ORTHO = 100;
+const int kRandom = 0;
+const int kNonOrtho = 100;
 float g_back[kAlphabetSize + 1];
 float evolution_prob(int node1, int node2, float branchlength) {
   /*
@@ -40,20 +40,20 @@ float evolution_prob(int node1, int node2, float branchlength) {
     return (1-exp(-SUBSTITUTION_PER_SITE*branchlength))*back[node2];
   */
 #ifdef PROTEIN
-  if (node1 == c_GAP)
+  if (node1 == kGap)
     return (node1 == node2) ? 1 : 0;
-  if (node2 == c_GAP)
-    return (1 - exp(-0.01 * branchlength)) * g_back[c_GAP];
+  if (node2 == kGap)
+    return (1 - exp(-0.01 * branchlength)) * g_back[kGap];
   float m = 0.0;
   float t = 1.0;
   for (int i = 0; i < MAX_POWERS; i++) {
     m += aa_rate_matrix_pow[i][node1 - 1][node2 - 1] * t;
     t *= branchlength;
   }
-  return (1 - ((1 - exp(-0.01 * branchlength)) * g_back[c_GAP])) * m;
+  return (1 - ((1 - exp(-0.01 * branchlength)) * g_back[kGap])) * m;
 #else
   // Amol's old code
-  if (node1 == c_GAP)
+  if (node1 == kGap)
     return (node1 == node2) ? 1 : 0;
   else if (node1 == node2)
     return (exp( -kSubstitutionPerSite * branchlength) + 
@@ -103,9 +103,9 @@ int alpha2int(char a) {
   case 'W' : return 18; break;
   case 'Y' : return 19; break;
   case 'V' : return 20; break;
-  case '-' : return c_GAP; break;
-  case '.' : return c_GAP; break;
-  default: return c_RANDOM; break;
+  case '-' : return kGap; break;
+  case '.' : return kGap; break;
+  default: return kRandom; break;
   }
 }
 #else
@@ -115,9 +115,9 @@ int alpha2int(char a) {
   case 'C' : return 2; break;
   case 'G' : return 3; break;
   case 'T' : return 4; break;
-  case '-' : return c_GAP; break;  
-  case '.' : return c_GAP; break;  
-  default: return c_RANDOM; break;
+  case '-' : return kGap; break;  
+  case '.' : return kGap; break;  
+  default: return kRandom; break;
   }
 }    
 #endif // PROTEIN

@@ -5,7 +5,7 @@
 Xiaoyu Chen, Amol Prakash, Martin Tompa. All of University of Washington.
 
 ## Adaptor
-[Dent Earl](https://github.com/dentearl/). Of UC Santa Cruz. Dent Earl adapted the StatSigMA-w code to allow parameters to be changed on the command line and to add input file verification steps.
+[Dent Earl](https://github.com/dentearl/) of UC Santa Cruz. Dent Earl adapted the StatSigMA-w code to allow parameters to be changed on the command line and to add input file verification steps.
 
 ## I. StatSigMAw v2 
 
@@ -15,7 +15,9 @@ This package has two major programs: SigMA and combine. We also provide a supple
 
 ## II. How to install
 
-Information about installing the programs is listed in doc/install.txt.
+1. Download or clone the repo.
+2. <code>cd</code> into the directory.
+3. Type <code>make</code>.
 
 ## III. Command lines and outputs
 

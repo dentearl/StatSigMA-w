@@ -383,6 +383,9 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     K = K_arr[0] / sim_count;
     lambda = lambda_arr[0] / sim_count;
     H = H_arr[0] / sim_count;
+    delete [] K_arr;
+    delete [] lambda_arr;
+    delete [] H_arr;
     cout << "# number of sets of parameter computed= " << sim_count << endl;
     int cur_seg = 0;
     ifstream ifs(mafFile); // reset mafFile
@@ -494,6 +497,8 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
         count += blocks.chain[bl]->block_score.size();
     }
     ifs.close();
+    delete [] limit;
+    delete [] score_left_right;
     
     debug("num_segments = %d\n", cur_seg);
     for (int i = 0; i < cur_seg; ++i)

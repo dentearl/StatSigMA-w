@@ -377,8 +377,8 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
         H_arr[0] += H_arr[i];
     }
     if (sim_count == 0) {
-        cerr << "Error, sim_count == 0" << endl;
-        // exit(EXIT_FAILURE);
+        cerr << "Error, sim_count == 0, no reference found in maf block?" << endl;
+        exit(EXIT_FAILURE);
     }
     K = K_arr[0] / sim_count;
     lambda = lambda_arr[0] / sim_count;

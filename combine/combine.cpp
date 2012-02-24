@@ -21,15 +21,12 @@ void usage(void);
 float get_PV(int i) {
     return g_CUR_PV[i];
 }
-
 void set_PV(int i, float pv) { 
     g_CUR_PV[i] = pv;
 }
-
 bool get_G_IsPresent(int i, int sp) { 
     return (g_isPresent[sp][i]); 
 }
- 
 bool is_NoneG_IsPresent(int i) { 
     bool res = true;
     for (int s = 0; s < branch_num; s++)
@@ -39,38 +36,31 @@ bool is_NoneG_IsPresent(int i) {
         }
     return res; 
 }
-
 void set_G_IsPresent(int i, int sp, bool cur_g_isPresent) { 
     g_isPresent[sp][i] = cur_g_isPresent;
 }
-
 bool get_Gap(int i, int sp) { 
     return (g_isGaps[sp][i]); 
 }
-
 void set_Gap(int i, int sp, bool cur_g_isGaps) {
     g_isGaps[sp][i] = cur_g_isGaps;
 }
-
 // Initialize g_isWorstSet for all species at position i.
 void init_WorstSet(int i) {
     for (int s = 0; s < (branch_num + 1); s++)
         g_isWorstSet[s][i] = false;
 }
-
 void add_WorstBranch(int i, int sp) {
     g_isWorstSet[sp][i] = true;
     if (sp < branch_num)
         for (int s = 0; s < branch_num; s++)
-            // check if sp is on the path from s to human
-            if ((get_G_IsPresent(i, s)) && (is_OnPathToHuman(s, sp)))
+            // check if sp is on the path from s to reference
+            if ((get_G_IsPresent(i, s)) && (is_OnPathToReference(s, sp)))
                 g_isWorstSet[s][i] = true;
 }
-
 bool isin_WorstSet(int i, int sp) {
     return (g_isWorstSet[sp][i]);
 }
-
 void read_Present() {
     // Initialize
     for (int i = 0; i < g_ALIGN_LEN; i++)
@@ -106,19 +96,19 @@ void read_Present() {
         } else {
             char* a;
             if (buffer[0] == 's') {
-                // Checking for human
-                bool is_human = false;
+                // Checking for reference
+                bool is_reference = false;
                 if (strncmp(buffer + 2, g_options.refSpecies, strlen(g_options.refSpecies)) == 0)
-                    is_human = true;
-                a = strtok(buffer, " ");
-                a = strtok(NULL, " ");
+                    is_reference = true;
+                a = strtok(buffer, " "); // s
+                a = strtok(NULL, " "); // name
                 int species_line = name2branch(a);
-                a = strtok(NULL, " ");
-                a = strtok(NULL, " ");
-                a = strtok(NULL, " ");
-                a = strtok(NULL, " ");
-                a = strtok(NULL, " ");
-                if (is_human)
+                a = strtok(NULL, " "); // start
+                a = strtok(NULL, " "); // length
+                a = strtok(NULL, " "); // strand
+                a = strtok(NULL, " "); // source length
+                a = strtok(NULL, " "); // alignment field
+                if (is_reference)
                     cur_len = strlen(a);
                 if (a[0] != 'N')
                     cur_g_isPresent[species_line] = true;
@@ -168,9 +158,9 @@ void read_Gaps() {
             char* a;
             if (buffer[0] == 's') {
                 // Checking for reference species
-                bool is_human = false;
+                bool is_reference = false;
                 if (strncmp(buffer + 2, g_options.refSpecies, strlen(g_options.refSpecies)) == 0)
-                    is_human = true;
+                    is_reference = true;
                 a = strtok(buffer, " ");
                 a = strtok(NULL, " ");
                 int species_line = name2branch(a);
@@ -179,7 +169,7 @@ void read_Gaps() {
                 a = strtok(NULL, " ");
                 a = strtok(NULL, " ");
                 a = strtok(NULL, " ");
-                if (is_human)
+                if (is_reference)
                     cur_len = strlen(a);
                 // a includes g_isGaps in the reference species here.
                 for (unsigned i = 0; i < strlen(a); i++)
@@ -194,7 +184,6 @@ void read_Gaps() {
     delete [] cur_g_isGaps;
     delete [] buffer;
 }
-
 bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& right_nearest, double& pv) {
     char text[10000];
     int segment, block, block_size;
@@ -241,7 +230,6 @@ bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& r
     }
     return false;
 }
-
 // Identifying good regions  (removed gap_check, because now g_isGaps are counted after outputting good regions)
 void output_good_regions() {
     int start = -1;
@@ -253,7 +241,7 @@ void output_good_regions() {
         else if (start != -1) {
             int currLen = i - start;
             if (currLen >= g_options.minSegSize) {
-                // the first and the last human coordinates in current region                
+                // the first and the last reference coordinates in current region                
                 int c = start;
                 while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
                     c++;
@@ -271,7 +259,6 @@ void output_good_regions() {
         }
     }
 }
-
 void read_output_pv(const char* branch_multiplier) {
     for (int sp = 0; sp < branch_num; sp++) {
         int start, end, left_nearest, right_nearest;
@@ -291,7 +278,6 @@ void read_output_pv(const char* branch_multiplier) {
         ifs.close();
     }
 }
-
 void read_output_worstbranch(const char* branch_multiplier) {
     // get the tree ID for current tree
     char treeID;
@@ -321,7 +307,6 @@ void read_output_worstbranch(const char* branch_multiplier) {
         ifs.close();
     }
 }
-
 void read_pv_dist(char* branch_multiplier, int sp) {
     double pv_dist[10];
     for (int i = 0; i < 10; i++)
@@ -352,7 +337,6 @@ void read_pv_dist(char* branch_multiplier, int sp) {
         cout << "my_pv " << sp << " " << i << " " << pv_dist[i]/float(total) 
              << " " << pv_dist[i] << endl; 
 }
-
 void scan_alignFile() {
     g_ALIGN_LEN = 0;
     int cur_len = 0;
@@ -371,11 +355,11 @@ void scan_alignFile() {
         else {
             char* a;
             if (buffer[0]=='s') {
-                // Checking for human
-                bool is_human = false;
+                // Checking for reference
+                bool is_reference = false;
                 if (strncmp(buffer + 2, g_options.refSpecies, strlen(g_options.refSpecies)) == 0)
-                    is_human = true;
-                if (is_human) {
+                    is_reference = true;
+                if (is_reference) {
                     a = strtok(buffer, " ");
                     a = strtok(NULL, " ");
                     a = strtok(NULL, " ");
@@ -397,8 +381,7 @@ void scan_alignFile() {
     ifs.close();
     delete [] buffer;
 }
-
-void map_humanCoordinates() {
+void map_referenceCoordinates() {
     int cumStart = 0;
     int cur_len = 0;
     char *buffer = new char[g_MAX_BLOCK_SIZE];
@@ -417,11 +400,11 @@ void map_humanCoordinates() {
         else {
             char* a;
             if (buffer[0]=='s') {
-                // Checking for human
-                bool is_human = false;
+                // Checking for reference
+                bool is_reference = false;
                 if (strncmp(buffer + 2, g_options.refSpecies, strlen(g_options.refSpecies)) == 0)
-                    is_human = true;
-                if (is_human) {
+                    is_reference = true;
+                if (is_reference) {
                     a = strtok(buffer, " ");
                     a = strtok(NULL, " ");
                     // get the chr info
@@ -440,7 +423,7 @@ void map_humanCoordinates() {
                     a = strtok(NULL, " ");
                     cur_len = strlen(a);
                     if (strcmp(orient, "-") == 0) {
-                        cout<<"Warning: there is negative strand in human!"<<endl;
+                        cout<<"Warning: there is negative strand in reference!"<<endl;
                         currHgPos = chrLen - currHgPos - 1;
                     }
                     for (int i = 0; i < cur_len; i++) {
@@ -459,7 +442,6 @@ void map_humanCoordinates() {
     ifs.close();
     delete [] buffer;
 }
-
 int main(int argc, char* argv[]) {
     loadDefaultParameters();
     int n = parseArgs(argc, argv);
@@ -574,11 +556,10 @@ int main(int argc, char* argv[]) {
     // Reading g_isGaps
     read_Gaps();
     cout << "read gaps" << endl;
-
-    // map alignment coordinates to human coordinates
+    // map alignment coordinates to reference coordinates
     refSpeciesCoord = new int[g_ALIGN_LEN];
-    map_humanCoordinates();
-    cout << "got human coordinates map" << endl;
+    map_referenceCoordinates();
+    cout << "got reference coordinates map" << endl;
     // Identigying good regions
     output_good_regions();
     // Identifying bad regions
@@ -601,7 +582,7 @@ int main(int argc, char* argv[]) {
                     for (int j = start; j < i; j++)
                         if (get_Gap(j, sp))
                             gap_count++;
-                    // the first and the last human coordinates in current region
+                    // the first and the last reference coordinates in current region
                     int c = start;
                     while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
                         c++;
@@ -631,7 +612,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-
     // Compute stats for bad positions due to any branch.
     start = -1;
     for (int i = 0; i < g_ALIGN_LEN; i++) {
@@ -645,8 +625,6 @@ int main(int argc, char* argv[]) {
             start = -1;
         }
     }
-  
-    
     // Output summary
     for (int sp = 0; sp < branch_num + 1; sp++)
         printf("my_count %d %d %d(%4.2f%%) %d\n", sp, count[sp][0], count[sp][1], 
@@ -656,12 +634,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < branch_num + 1; ++i)
         delete [] count[i];
     delete [] count;
-    
     exit(EXIT_SUCCESS);
 }
-
-void usage(void)
-{
+void usage(void) {
     fprintf(stderr, "Usage: combine <maf file> <SigMA output dir> <SigMA output prefix> [options]\n\n");
     fprintf(stderr, "  <maf file>: the multiple sequence alignment in maf format.\n");
     fprintf(stderr, "  <SigMA output dir>: the directory where the SigMA output files are located.\n");
@@ -724,15 +699,11 @@ void usage(void)
             );
     exit(EXIT_FAILURE);
 }
-
-void loadDefaultParameters(void)
-{
+void loadDefaultParameters(void) {
     strcpy(g_options.phylogeny, "(((((((((((((hg:0.006690,chimp:0.007571):0.024272,(colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120):0.023960,(dusky_titi:0.025662,(owl_monkey:0.012151,marmoset:0.029549):0.008236):0.027158):0.066101,(mouse_lemur:0.059024,galago:0.121375):0.032386):0.017073,((rat:0.081728,mouse:0.077017):0.229273,rabbit:0.206767):0.023340):0.023026,(((cow:0.159182,dog:0.147731):0.004946,rfbat:0.138877):0.010150,(hedgehog:0.193396,shrew:0.261724):0.054246):0.024354):0.028505,armadillo:0.149862):0.015994,(elephant:0.104891,tenrec:0.259797):0.040371):0.218400,monodelphis:0.371073):0.065268,platypus:0.468116):0.123856,chicken:0.454691):0.123297,xenopus:0.782453):0.156067,((tetraodon:0.199381,fugu:0.239894):0.492961,zebrafish:0.782561):0.156067)");
     strcpy(g_options.refSpecies, "hg");
 }
-
-int parseArgs(int argc, char **argv)
-{
+int parseArgs(int argc, char **argv) {
     static const char *optString = "vh?";
     static const struct option longOpts[] = {
         {"phylogeny", required_argument, NULL, 0},
@@ -801,17 +772,14 @@ int parseArgs(int argc, char **argv)
     }
     return optind;
 }
-void message(char const *type, char const *fmt, ...)
-{
+void message(char const *type, char const *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     fprintf(stderr, "%s: ", type);
     vfprintf(stderr, fmt, args);
     va_end(args);
 }
-
-void verbose(char const *fmt, ...)
-{
+void verbose(char const *fmt, ...) {
     char str[kMaxMessageLength];
     va_list args;
     va_start(args, fmt);
@@ -825,9 +793,7 @@ void verbose(char const *fmt, ...)
     }
     va_end(args);
 }
-
-void debug(char const *fmt, ...)
-{
+void debug(char const *fmt, ...) {
     char str[kMaxMessageLength];
     va_list args;
     va_start(args, fmt);

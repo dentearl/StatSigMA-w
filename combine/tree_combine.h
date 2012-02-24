@@ -28,7 +28,6 @@ int name2branch(char* name) {
             return i;
     return -1;
 }
-
 class Tree {
  public:
     int left_num;
@@ -197,7 +196,6 @@ void assign_branch_num(Tree* node) {
     if (ll->left_subtree) assign_branch_num(ll);
     if (rr->left_subtree) assign_branch_num(rr);
 }
-
 unsigned countSpecies(Tree *node) {
     // walks a tree and counts the number of leafs
     Tree* l = node->left_subtree;
@@ -206,7 +204,6 @@ unsigned countSpecies(Tree *node) {
         return 1;
     return (countSpecies(l) + countSpecies(r));
 }
-
 int countNodes(Tree *node) {
     // walks a tree and counts the number of nodes
     // based on the walking method present in assign_branch_num
@@ -238,7 +235,6 @@ int countNodes(Tree *node) {
     if (r->left_subtree) rightNum = countNodes(r);
     return (c + leftNum + rightNum);
 }
-
 void read_newick_tree(void) {
     int pos = 0;
     species_num = 0;
@@ -254,11 +250,11 @@ void read_newick_tree(void) {
     assign_branch_num(root);
 }
 
-bool is_OnPathToHuman(int leaf, int edge) {
+bool is_OnPathToReference(int leaf, int edge) {
     Tree* start = list_of_branches[leaf];
     Tree* ref = list_of_branches[name2branch(g_options.refSpecies)];
     Tree* e = list_of_branches[edge];
-    // Storing path from human to root
+    // Storing path from reference to root
     Tree* path1[100];
     int len1 = 0;
     Tree* temp = ref;
@@ -267,8 +263,8 @@ bool is_OnPathToHuman(int leaf, int edge) {
         temp = temp->parent;
         path1[len1++] = temp;
     }
-    // found denotes the common parent of that leaf and human
-    // locate found from human's ancestors
+    // found denotes the common parent of that leaf and reference
+    // locate found from reference's ancestors
     temp = start;
     int found = -1;
     for (int i = 0; i < len1; i++)
@@ -282,7 +278,7 @@ bool is_OnPathToHuman(int leaf, int edge) {
         for (int i = 0; i < len1; i++)
             if (temp == path1[i]) found = i;
     } while (found == -1);
-    // searching from human to found, check whether edge is on the path
+    // searching from reference to found, check whether edge is on the path
     // ignoring the edge incident on the common parent (i.e. i = found is not considered)
     for (int i = 0; i < found; i++)
         if (path1[i] == e) return true;
@@ -296,7 +292,7 @@ void insert_inner_branches(bool *cur_sp) {
     for (int i = 0; i < branch_num; i++)
         list_of_branches[i]->is_both_present = list_of_branches[i]->is_any_present = cur_sp[i];
     Tree* ref = list_of_branches[name2branch(g_options.refSpecies)];
-    // Going up from human, and filling each sibling subtree
+    // Going up from reference, and filling each sibling subtree
     Tree* temp = ref;
     Tree* prev;
     while (temp != root) {
@@ -307,7 +303,7 @@ void insert_inner_branches(bool *cur_sp) {
             prev->left_subtree->fill_present();
         temp = prev;
     }
-    // Now going up from reference species (i.e. human), and filling each on that path
+    // Now going up from reference species and filling each on that path
     Tree* path[100];
     int len = 0;
     temp = ref;
@@ -355,7 +351,7 @@ void insert_inner_branches(bool *cur_sp) {
         len--;
     }
     // Only update from false -> true (Not from true -> false)
-    // So it won't affect the branch leading to leaves (i.e. human).
+    // So it won't affect the branch leading to leaves (i.e. reference).
     for (int s = 0; s < branch_num; s++)
         if (list_of_branches[s]->is_both_present)
             cur_sp[s] = true; 
@@ -369,7 +365,6 @@ void check_gapped_branches(bool *cur_sp) {
     for (int s = 0; s < branch_num; s++)
         list_of_branches[s]->is_all_present = cur_sp[s];
     root->fill_present();
-  
     // check if one subtree separated by current branch has all gaps at its leaves.
     for (int s = 0; s < branch_num; s++) {
         Tree* currTree = list_of_branches[s];

@@ -235,7 +235,7 @@ void usage(void) {
     fprintf(stderr, "  <branch index>: the index of one branch of the phylogenetic tree\n"
             "                  corresponding to the alignment.\n");
     fprintf(stderr, "  <branch multiplier>: the multiplier of branch length of the phylogenetic tree.\n");
-    fprintf(stderr, "  <pvale dist file>: pvalue distribution of the various scores and number of segments.\n");
+    fprintf(stderr, "  <pvalue dist file>: pvalue distribution of the various scores and number of segments.\n");
 
     fprintf(stderr, "\nDESCRIPTION\n");
     fprintf(stderr,"Given a branch of the phylogenetic tree and a branch multiplier,\n"

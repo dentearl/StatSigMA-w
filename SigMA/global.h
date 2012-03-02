@@ -35,6 +35,7 @@ const int kMaxLengthNewick = 4096;
 const int kMaxLengthRefSpecies = 32;
 const int kMaxLengthMessage = 1024;
 const int kMinLineLength = 1024;
+const char kVersion[] = "v2 ucsc.1";
 
 struct g_options_t{
     char *mafFile;

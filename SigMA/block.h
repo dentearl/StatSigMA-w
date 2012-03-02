@@ -100,11 +100,11 @@ class blocks_type {
 };
 bool blocks_type::read_single_from_maf(ifstream& ifs) {
     /* Reads one block out of the maf file pointed to by ifs and 
-     * makes it available in
+     * stores it internally to the object
      */
     // printf("read_single_from_maf()\n");
-    single_block* seq1;
-    single_block* seq2;
+    single_block *seq1 = NULL;
+    single_block *seq2 = NULL;
     if (chain.size() == 0) {
         seq1 = new single_block;
         seq2 = new single_block;
@@ -138,7 +138,10 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         while (ifs && (buffer[0] != 'a')) {
             buffer[0] = '\0';
             ifs.getline(buffer, bufferLen);
-            ++lineNumber;
+            if (buffer[strlen(buffer) + 1] == '\n')
+                ++lineNumber;
+            if (strlen(buffer) == bufferLen - 1)
+                printf("total bs, %lu\n", bufferLen - 1);
             if (ifs.fail() && !ifs.eof()) {
                 cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
                 exit(EXIT_FAILURE);
@@ -152,7 +155,8 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         }
         buffer[0] = '\0';
         ifs.getline(buffer, bufferLen);
-        ++lineNumber;
+        if (buffer[strlen(buffer)] == '\n')
+            ++lineNumber;
         if (ifs.fail() && !ifs.eof()) {
             cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
             exit(EXIT_FAILURE);
@@ -203,7 +207,8 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             // record the position of pointer
             pos = ifs.tellg();
             ifs.getline(buffer, bufferLen);
-            ++lineNumber;
+            if (buffer[strlen(buffer)] == '\n')
+                ++lineNumber;
             if (ifs.fail() && !ifs.eof()) {
                 cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
                 exit(EXIT_FAILURE);

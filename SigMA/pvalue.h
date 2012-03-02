@@ -159,8 +159,8 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
         if ((good1 > 0) && (good2 > 0)) {      
             for (int tp = 0; tp < g_options.totalNumberTuples; ++tp) {
                 // random choose a tuple from good_tuple1 and good_tuple2
-                int goodID1 = (int)(rand() / (((double)RAND_MAX + 1) / good1));
-                int goodID2 = (int)(rand() / (((double)RAND_MAX + 1) / good2));
+                int goodID1 = static_cast<int>(rand() / (((double)RAND_MAX + 1) / good1));
+                int goodID2 = static_cast<int>(rand() / (((double)RAND_MAX + 1) / good2));
                 int l1 = good_tuple1[goodID1];
                 int l2 = good_tuple2[goodID2];
                 if ((total_computations + 1) % 10000 == 0)
@@ -326,10 +326,10 @@ void printBlock(blocks_type *block) {
 }
 
 double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char* mafFile) {
-    /* 
+    /* computes the p-value for one branch in the tree
      */
-    int max_seg = 6000000; // 6 * 10^6
-    final_seg_type* all_seg = new final_seg_type[max_seg + 1];
+    int max_seg = 6000000;
+    final_seg_type *all_seg = new final_seg_type[max_seg + 1];
     scan_alignFile(mafFile);
     debug("Reference chromosome start position = %d\n", g_CHR_START);
     debug("Reference sequence(non-gap) length = %d\n", g_CHR_LEN);
@@ -348,24 +348,25 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     ifstream ifs1(mafFile);
     
     // int runs = 0;
-    float rate = g_ALIGN_LEN / (float)g_options.totalIterateParam;
+    float rate = g_ALIGN_LEN / static_cast<float>(g_options.totalIterateParam);
     debug("Align length = %d\n", g_ALIGN_LEN);
     int sim_count = 0;
     int block_count = 0;
+    int lineNumber = -1;
     // printf("going to try to read\n");
     while ((blocks_param->read_single_from_maf(ifs1)) &&
            (sim_count < g_options.totalIterateParam)) {
+        lineNumber = blocks_param->lineNumber;
         // fprintf(stderr, "read one\n");
         // printBlock(blocks_param);
         if (!blocks_param->containsReference) {
             // reference not found in this block, skip
             ++g_NUM_BLOCKS_SKIPPED;
-            // printf("skipping block\n");
             continue;
         }
         // printf("read okay, blocks_param->chain[0]->length: %d\n", blocks_param->chain[0]->length);
         int currBlockSize = blocks_param->chain[0]->length;
-        int currRepNum = (int)(currBlockSize / rate);      
+        int currRepNum = static_cast<int>(currBlockSize / rate);      
         // if failures, need try more times
         int maxTry = currRepNum * 2;
         int blockSimCount = 0;
@@ -387,6 +388,8 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     // printf("sim_count = %d\n", sim_count);
     delete blocks_param;
     ifs1.close();
+    cout << "# StatSigMAw " << kVersion << " " << timeStamp() << " rseed: " 
+         << g_options.rseed << endl;
     cout << "# number of blocks skipped due to missing reference= " << g_NUM_BLOCKS_SKIPPED << endl;
     cout << "# number of sigMA blocks= " << block_count << endl;
     for (int i = 0; i < sim_count; ++i) {
@@ -396,6 +399,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     }
     if (sim_count == 0) {
         cerr << "Error, sim_count == 0, no reference found in maf block?" << endl;
+        cerr << "Last read line number was " << lineNumber << endl;
         exit(EXIT_FAILURE);
     }
     K = K_arr[0] / sim_count;
@@ -525,7 +529,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     pair <int, int>* best_scores = new pair <int, int>[cur_seg];
     for (int i = 0; i < cur_seg; ++i) {
         best_scores[i].first = i;
-        best_scores[i].second = (int)all_seg[i].score;
+        best_scores[i].second = static_cast<int>(all_seg[i].score);
     }
     qsort(best_scores, cur_seg, sizeof(best_scores[0]), cmpPairInts);
     double best_pvalue = 1.0;
@@ -630,18 +634,18 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                 while (contextCount < kMaxNumberContexts) { 
                     // random number [0, index - find_left - 1]
                     // i1: [find_left + 1, index]
-                    int i1 = find_left + 1 + (int)(rand() / (((double)RAND_MAX) / (leftNum - 1)));
+                    int i1 = find_left + 1 + static_cast<int>(rand() / (((double)RAND_MAX) / (leftNum - 1)));
                     // random number [0, find_right - index - 1]
                     // i2: [index, find_right - 1]
-                    int i2 = index + (int)(rand() / (((double)RAND_MAX) / (rightNum - 1)));
+                    int i2 = index + static_cast<int>(rand() / (((double)RAND_MAX) / (rightNum - 1)));
                     int i_real = 0;
                     for (int i = 0; i < i2 - i1 + 1; ++i)
                         if (i1 + i != index)
-                            intermediate_scores[i_real++].second = (int)all_seg[i1 + i].score;
+                            intermediate_scores[i_real++].second = static_cast<int>(all_seg[i1 + i].score);
                     qsort(intermediate_scores, i2 - i1, sizeof(intermediate_scores[0]), cmpPairInts);
                     for (int i = i2 - i1 - 1; i >= 0; i--)
                         intermediate_scores[i + 1].second = intermediate_scores[i].second;
-                    intermediate_scores[0].second = (int)all_seg[index].score;
+                    intermediate_scores[0].second = static_cast<int>(all_seg[index].score);
                     double total_score = 0;
                     double fact = 1;
                     double best_pvalue1 = 1;
@@ -684,11 +688,11 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                         int i_real = 0;
                         for (int i = 0; i < i2 - i1 + 1; ++i)
                             if (i1 + i != index)
-                                intermediate_scores[i_real++].second = (int)all_seg[i1 + i].score;
+                                intermediate_scores[i_real++].second = static_cast<int>(all_seg[i1 + i].score);
                         qsort(intermediate_scores, i2 - i1, sizeof(intermediate_scores[0]), cmpPairInts);
                         for (int i = i2 - i1 - 1; i >= 0; i--)
                             intermediate_scores[i + 1].second = intermediate_scores[i].second;
-                        intermediate_scores[0].second = (int)all_seg[index].score;
+                        intermediate_scores[0].second = static_cast<int>(all_seg[index].score);
                         double total_score = 0;
                         double fact = 1;
                         double best_pvalue1 = 1;

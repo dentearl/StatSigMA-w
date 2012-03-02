@@ -460,200 +460,6 @@ void map_referenceCoordinates() {
     ifs.close();
     delete [] buffer;
 }
-int main(int argc, char* argv[]) {
-    loadDefaultParameters();
-    int n = parseArgs(argc, argv);
-    if (argc - n != 4) {
-        fprintf(stderr, "Error: wrong number of arguments.\n");
-        usage();
-    }
-    
-    strcpy(g_options.mafFile, argv[n]);
-    strcpy(g_options.SigMAwOutDir, argv[n + 1]);
-    strcpy(g_options.SigMAwOutPrefix, argv[n + 2]);
-  
-    scan_alignFile();
-    cout << "alignmnt length: "<< g_ALIGN_LEN << endl;
-    g_CUR_PV = new float[g_ALIGN_LEN];
-    g_TEMP_PV = new float[g_ALIGN_LEN];
-    // record the tree ID that has min(max PValue)
-    g_TREE_PV = new char[g_ALIGN_LEN];
-    read_newick_tree();
-    assert(branch_num * g_ALIGN_LEN < 1e9);
-    cout << "read tree" << endl;  
-    // memory allocate
-    g_isPresent = new bool*[branch_num];
-    for (int s = 0; s < branch_num; s++) 
-        g_isPresent[s] = new bool[g_ALIGN_LEN];
-    // read in g_isPresent[] for each branch - position, 
-    // indicating if the branch is "g_isPresent" at the  position
-    read_Present();
-    cout << "read Present" << endl;
-    // read in curr_pv[], the min(max pvalue over branches) over trees.
-    // Firstly, identify the max pvalue among different branches. 
-    // Then, identify the min pvalue among the three trees.
-    // Using g_TEMP_PV as the structure to store temporary pvalue (as the 3 trees are read)
-  
-    // initialize
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        set_PV(i, 0);
-        g_TEMP_PV[i] = 1;
-        g_TREE_PV[i] = 'n';
-    }
-    // for tree "100", ID is 2.
-    read_output_pv("100");
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        if ((g_TEMP_PV[i] > g_CUR_PV[i]) && (!is_NoneG_IsPresent(i))) {
-            g_TEMP_PV[i] = g_CUR_PV[i];
-            g_TREE_PV[i] = '2';
-        }
-        set_PV(i, 0);
-    }
-    // for tree "0.01", ID is 0
-    read_output_pv("0.01");
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        if ((g_TEMP_PV[i] > g_CUR_PV[i]) && (!is_NoneG_IsPresent(i))) {
-            g_TEMP_PV[i] = g_CUR_PV[i];
-            g_TREE_PV[i] = '0';
-        }
-        set_PV(i, 0);
-    }
-    // for tree "1", ID is 1.
-    read_output_pv("1");
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        if (g_TEMP_PV[i] < g_CUR_PV[i])
-            g_CUR_PV[i] = g_TEMP_PV[i];
-        else
-            g_TREE_PV[i] = '1';
-    }
-    delete [] g_TEMP_PV;
-    cout << "identified pvalues" << endl;
-    // Identify the worst set that are branches having pvalue == curr_pv at each position.
-    // memory allocate
-    g_isWorstSet = new bool*[branch_num + 1];
-    for (int s = 0; s < (branch_num + 1); s++)
-        g_isWorstSet[s] = new bool[g_ALIGN_LEN];
-    for (int i = 0; i < g_ALIGN_LEN; i++)
-        init_WorstSet(i);
-    read_output_worstbranch("100");
-    read_output_worstbranch("0.01");
-    read_output_worstbranch("1");
-    cout << "identified g_isWorstSet" << endl;
-    // Bonferonni Correction for  the curr_pv (due to three trees different)
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        float f = get_PV(i);
-        if (f > 0.33)
-            set_PV(i, 1);
-        else
-            set_PV(i, f * 3);
-    }
-  
-    int **count = new int*[branch_num + 1];
-    for (int i = 0; i < 3; ++i)
-        count[i] = new int[3];
-    for (int sp = 0; sp < branch_num + 1; sp++) {
-        count[sp][0] = count[sp][1] = count[sp][2] = 0;
-        for (int i = 0; i < g_ALIGN_LEN; i++)
-            if (sp < branch_num) {
-                if (get_G_IsPresent(i, sp))
-                    count[sp][0]++;
-            }
-            else {
-                if (!is_NoneG_IsPresent(i)) 
-                    count[sp][0]++;
-            }
-    }
-    
-    // memory allocate
-    for (int s = 0; s < branch_num; s++)
-        delete [] g_isPresent[s];
-    delete [] g_isPresent;
-    g_isGaps = new bool*[branch_num];
-    for (int s = 0; s < branch_num; s++)
-        g_isGaps[s] = new bool[g_ALIGN_LEN];
-    // Reading g_isGaps
-    read_Gaps();
-    cout << "read gaps" << endl;
-    // map alignment coordinates to reference coordinates
-    refSpeciesCoord = new int[g_ALIGN_LEN];
-    map_referenceCoordinates();
-    cout << "got reference coordinates map" << endl;
-    // Identigying good regions
-    output_good_regions();
-    // Identifying bad regions
-    int start;
-    for (int sp = 0; sp < branch_num; sp++) {
-        start = -1;
-        for (int i = 0; i < g_ALIGN_LEN; i++) {
-            // when current position is a bad one
-            if ((get_PV(i) >= g_options.pvThreshBad) && (isin_WorstSet(i, sp))) {
-                // starting position
-                if (start == -1)
-                    start = i;
-            }
-            // when current position is a good one, output the region before it if the region is long enough.
-            else if (start != -1) {
-                int currLen = i - start;
-                if (currLen >= g_options.minSegSize) {
-                    // count the number of gaps in the region.
-                    int gap_count = 0;
-                    for (int j = start; j < i; j++)
-                        if (get_Gap(j, sp))
-                            gap_count++;
-                    // the first and the last reference coordinates in current region
-                    int c = start;
-                    while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
-                        c++;
-                    int firstHgCoor = refSpeciesCoord[c];
-	  
-                    c = start + currLen - 1;
-                    while ((refSpeciesCoord[c] == -1) && (c > 0))
-                        c--;
-                    int lastHgCoor = refSpeciesCoord[c];
-                    // output
-                    if (gap_count < 0.5 * currLen) {
-                        // ucsc browser coordinate start with 1, refSpeciesCoord + 1
-                        cout << "my_bad_region " << start << " " << sp << " " << currLen 
-                             << " " << g_refSpeciesChr << " " << firstHgCoor + 1 << " " << lastHgCoor + 1 << endl; 
-                        count[sp][1] += currLen;
-                        count[sp][2]++;
-                        for (int my_pos = start; my_pos < i; my_pos++) {
-                            // using 'branch_num' in the 'g_isWorstSet' to indicate this position is a bad one.
-                            add_WorstBranch(my_pos, branch_num);
-                        }
-                    }
-                    start = -1;
-                }
-                // reset the starting position, if the region before current good position is not long enough.
-                else
-                    start = -1;
-            }
-        }
-    }
-    // Compute stats for bad positions due to any branch.
-    start = -1;
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        if (isin_WorstSet(i, branch_num)) {
-            if (start == -1)
-                start = i;
-        }
-        else if (start != -1) {
-            count[branch_num][1] += i - start;
-            count[branch_num][2]++;
-            start = -1;
-        }
-    }
-    // Output summary
-    for (int sp = 0; sp < branch_num + 1; sp++)
-        printf("my_count %d %d %d(%4.2f%%) %d\n", sp, count[sp][0], count[sp][1], 
-               count[sp][1] * 100.0 / float(count[sp][0]), count[sp][2]);
-    cout << "printed count" << endl; 
-    
-    for (int i = 0; i < branch_num + 1; ++i)
-        delete [] count[i];
-    delete [] count;
-    exit(EXIT_SUCCESS);
-}
 void usage(void) {
     fprintf(stderr, "Usage: combine <maf file> <SigMA output dir> <SigMA output prefix> [options]\n\n");
     fprintf(stderr, "  <maf file>: the multiple sequence alignment in maf format.\n");
@@ -825,4 +631,199 @@ void debug(char const *fmt, ...) {
         message("Debug", str, args);
     }
     va_end(args);
+}
+int main(int argc, char* argv[]) {
+    loadDefaultParameters();
+    int n = parseArgs(argc, argv);
+    if (argc - n != 4) {
+        fprintf(stderr, "Error: wrong number of arguments.\n");
+        usage();
+    }
+    
+    strcpy(g_options.mafFile, argv[n]);
+    strcpy(g_options.SigMAwOutDir, argv[n + 1]);
+    strcpy(g_options.SigMAwOutPrefix, argv[n + 2]);
+  
+    scan_alignFile();
+    cout << "alignmnt length: "<< g_ALIGN_LEN << endl;
+    g_CUR_PV = new float[g_ALIGN_LEN];
+    g_TEMP_PV = new float[g_ALIGN_LEN];
+    // record the tree ID that has min(max PValue)
+    g_TREE_PV = new char[g_ALIGN_LEN];
+    read_newick_tree();
+    assert(branch_num * g_ALIGN_LEN < 1e9);
+    cout << "read tree" << endl;  
+    // memory allocate
+    g_isPresent = new bool*[branch_num];
+    for (int s = 0; s < branch_num; s++) 
+        g_isPresent[s] = new bool[g_ALIGN_LEN];
+    // read in g_isPresent[] for each branch - position, 
+    // indicating if the branch is "g_isPresent" at the  position
+    read_Present();
+    cout << "read Present" << endl;
+    // read in curr_pv[], the min(max pvalue over branches) over trees.
+    // Firstly, identify the max pvalue among different branches. 
+    // Then, identify the min pvalue among the three trees.
+    // Using g_TEMP_PV as the structure to store temporary pvalue (as the 3 trees are read)
+  
+    // initialize
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        set_PV(i, 0);
+        g_TEMP_PV[i] = 1;
+        g_TREE_PV[i] = 'n';
+    }
+    // for tree "100", ID is 2.
+    read_output_pv("100");
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        if ((g_TEMP_PV[i] > g_CUR_PV[i]) && (!is_NoneG_IsPresent(i))) {
+            g_TEMP_PV[i] = g_CUR_PV[i];
+            g_TREE_PV[i] = '2';
+        }
+        set_PV(i, 0);
+    }
+    // for tree "0.01", ID is 0
+    read_output_pv("0.01");
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        if ((g_TEMP_PV[i] > g_CUR_PV[i]) && (!is_NoneG_IsPresent(i))) {
+            g_TEMP_PV[i] = g_CUR_PV[i];
+            g_TREE_PV[i] = '0';
+        }
+        set_PV(i, 0);
+    }
+    // for tree "1", ID is 1.
+    read_output_pv("1");
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        if (g_TEMP_PV[i] < g_CUR_PV[i])
+            g_CUR_PV[i] = g_TEMP_PV[i];
+        else
+            g_TREE_PV[i] = '1';
+    }
+    delete [] g_TEMP_PV;
+    cout << "identified pvalues" << endl;
+    // Identify the worst set that are branches having pvalue == curr_pv at each position.
+    // memory allocate
+    g_isWorstSet = new bool*[branch_num + 1];
+    for (int s = 0; s < (branch_num + 1); s++)
+        g_isWorstSet[s] = new bool[g_ALIGN_LEN];
+    for (int i = 0; i < g_ALIGN_LEN; i++)
+        init_WorstSet(i);
+    read_output_worstbranch("100");
+    read_output_worstbranch("0.01");
+    read_output_worstbranch("1");
+    cout << "identified g_isWorstSet" << endl;
+    // Bonferonni Correction for  the curr_pv (due to three trees different)
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        float f = get_PV(i);
+        if (f > 0.33)
+            set_PV(i, 1);
+        else
+            set_PV(i, f * 3);
+    }
+  
+    int **count = new int*[branch_num + 1];
+    for (int i = 0; i < 3; ++i)
+        count[i] = new int[3];
+    for (int sp = 0; sp < branch_num + 1; sp++) {
+        count[sp][0] = count[sp][1] = count[sp][2] = 0;
+        for (int i = 0; i < g_ALIGN_LEN; i++)
+            if (sp < branch_num) {
+                if (get_G_IsPresent(i, sp))
+                    count[sp][0]++;
+            }
+            else {
+                if (!is_NoneG_IsPresent(i)) 
+                    count[sp][0]++;
+            }
+    }
+    
+    // memory allocate
+    for (int s = 0; s < branch_num; s++)
+        delete [] g_isPresent[s];
+    delete [] g_isPresent;
+    g_isGaps = new bool*[branch_num];
+    for (int s = 0; s < branch_num; s++)
+        g_isGaps[s] = new bool[g_ALIGN_LEN];
+    // Reading gaps
+    read_Gaps();
+    cout << "read gaps" << endl;
+    // map alignment coordinates to reference coordinates
+    refSpeciesCoord = new int[g_ALIGN_LEN];
+    map_referenceCoordinates();
+    cout << "got reference coordinates map" << endl;
+    // Identigying good regions
+    output_good_regions();
+    // Identifying bad regions
+    int start;
+    for (int sp = 0; sp < branch_num; sp++) {
+        start = -1;
+        for (int i = 0; i < g_ALIGN_LEN; i++) {
+            // when current position is a bad one
+            if ((get_PV(i) >= g_options.pvThreshBad) && (isin_WorstSet(i, sp))) {
+                // starting position
+                if (start == -1)
+                    start = i;
+            }
+            // when current position is a good one, output the region before it if the region is long enough.
+            else if (start != -1) {
+                int currLen = i - start;
+                if (currLen >= g_options.minSegSize) {
+                    // count the number of gaps in the region.
+                    int gap_count = 0;
+                    for (int j = start; j < i; j++)
+                        if (get_Gap(j, sp))
+                            gap_count++;
+                    // the first and the last reference coordinates in current region
+                    int c = start;
+                    while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
+                        c++;
+                    int firstHgCoor = refSpeciesCoord[c];
+	  
+                    c = start + currLen - 1;
+                    while ((refSpeciesCoord[c] == -1) && (c > 0))
+                        c--;
+                    int lastHgCoor = refSpeciesCoord[c];
+                    // output
+                    if (gap_count < 0.5 * currLen) {
+                        // ucsc browser coordinate start with 1, refSpeciesCoord + 1
+                        cout << "my_bad_region " << start << " " << sp << " " << currLen 
+                             << " " << g_refSpeciesChr << " " << firstHgCoor + 1 << " " 
+                             << lastHgCoor + 1 << endl; 
+                        count[sp][1] += currLen;
+                        count[sp][2]++;
+                        for (int my_pos = start; my_pos < i; my_pos++) {
+                            // using 'branch_num' in the 'g_isWorstSet' to indicate this position is a bad one.
+                            add_WorstBranch(my_pos, branch_num);
+                        }
+                    }
+                    start = -1;
+                }
+                // reset the starting position, if the region before current good position is not long enough.
+                else
+                    start = -1;
+            }
+        }
+    }
+    // Compute stats for bad positions due to any branch.
+    start = -1;
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        if (isin_WorstSet(i, branch_num)) {
+            if (start == -1)
+                start = i;
+        }
+        else if (start != -1) {
+            count[branch_num][1] += i - start;
+            count[branch_num][2]++;
+            start = -1;
+        }
+    }
+    // Output summary
+    for (int sp = 0; sp < branch_num + 1; sp++)
+        printf("my_count %d %d %d(%4.2f%%) %d\n", sp, count[sp][0], count[sp][1], 
+               count[sp][1] * 100.0 / float(count[sp][0]), count[sp][2]);
+    cout << "printed count" << endl; 
+    
+    for (int i = 0; i < branch_num + 1; ++i)
+        delete [] count[i];
+    delete [] count;
+    exit(EXIT_SUCCESS);
 }

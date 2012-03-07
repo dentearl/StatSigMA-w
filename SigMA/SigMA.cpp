@@ -182,17 +182,25 @@ Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
             verifyNewickBounds(pos);
         }
         strncpy(g_SPECIES_NAMES[sp_num], newick_format + start_pos, pos - start_pos);
-        g_SPECIES_NAMES[sp_num][pos - start_pos] = '\0';    
+        g_SPECIES_NAMES[sp_num][pos - start_pos] = '\0';
         Tree* node = new Tree(sp_num, g_SPECIES_NAMES[sp_num]);
         list_of_leaves[sp_num] = node;
         sp_num++;
         return node;
     }
 }
+void reportSpeciesNames(void) {
+    for (int i = 0; i < kMaxNumberBranches; ++i) {
+        if (g_SPECIES_NAMES[i][0] == '\0') 
+            continue;
+        debug("stored name: %s\n", g_SPECIES_NAMES[i]);
+    }
+}
 void generate_and_read_newick_tree() {
     int pos = 0;
     g_NUM_SPECIES = 0;
     root = read_tree(g_options.phylogeny, g_NUM_SPECIES, pos);
+    reportSpeciesNames();
 }
 void read_multi_pv(char* filename) {
     g_MULTI_PV = new double*[g_options.maxSegments + 1];

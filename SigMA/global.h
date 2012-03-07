@@ -37,7 +37,7 @@ const int kMaxLengthMessage = 1024;
 const int kMinLineLength = 1024;
 const char kVersion[] = "v2 ucsc.1";
 
-struct g_options_t{
+struct g_options_t {
     char *mafFile;
     int branchIndex;
     char *multipvFile;
@@ -89,6 +89,6 @@ const int kMaxNumberBranches = 1000; // largest number of branches allowed in a 
 int g_NUM_SPECIES = kMaxNumberBranches;
 char g_SPECIES_NAMES[kMaxNumberBranches][32];
 double** g_MULTI_PV;
-int g_NUM_BLOCKS_SKIPPED = 0; // count of blocks due to missing reference
+int g_NUM_BLOCKS_SKIPPED = 0; // count of blocks skipped due to missing reference
 
 #endif // GLOBAL_H_

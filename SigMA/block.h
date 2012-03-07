@@ -11,21 +11,21 @@
  *  distributed together with these Conditions of Use, (b) that Martin
  *  Tompa receive a copy of the finalized modified software, and (c)
  *  that Xiaoyu Chen, Amol Prakash, and Martin Tompa are credited with
- *  the authorship of the software.  
+ *  the authorship of the software.
  * 2. The StatSigmMA - w software
  *  will be used by you and/or your institution solely for
  *  noncommercial purposes, except with express permission from the
- *  authors.  
+ *  authors.
  * 3. Any risk associated with using the StatSigmMA - w
  *  software at your institution is with you and your institution.
  * 4. StatSigmMA - w will be cited in any publication(s) reporting on
- *  data obtained from it as: 
+ *  data obtained from it as:
  * * Amol Prakash and Martin Tompa,
  *   "Measuring the Accuracy of Genome - Size Multiple
  *   Alignments". Genome Biology, vol. 8, issue 6, June 2007, R124.
  * * Xiaoyu Chen and Martin Tompa, "Comparative assessment of methods
  *   for aligning multiple genome sequences". Nature Biotechnology,
- *   vol. 28, no. 6, June 2010, 567 - 572.  
+ *   vol. 28, no. 6, June 2010, 567 - 572.
  */
 #ifndef BLOCK_H_
 #define BLOCK_H_
@@ -44,7 +44,7 @@
 using namespace std;
 using namespace __gnu_cxx;
 
-int name2species(char *name) { 
+int name2speciesInt(char *name) {
     for (int i = 0; i < g_NUM_SPECIES; i++)
         if (strncmp(name, g_SPECIES_NAMES[i], strlen(g_SPECIES_NAMES[i])) == 0)
             return i;
@@ -99,7 +99,7 @@ class blocks_type {
     bool read_single_from_maf(ifstream& ifs);
 };
 bool blocks_type::read_single_from_maf(ifstream& ifs) {
-    /* Reads one block out of the maf file pointed to by ifs and 
+    /* Reads one block out of the maf file pointed to by ifs and
      * stores it internally to the object
      */
     // printf("read_single_from_maf()\n");
@@ -166,14 +166,16 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         bool *speciesPresent = new bool[g_NUM_SPECIES]();
         while ((ifs) && (buffer[0] != 'a')) {
             if (buffer[0] == 's') {
-                int sp = name2species(buffer + 2);
+                int sp = name2speciesInt(buffer + 2);
+                if (sp == -1)
+                    continue;
                 if (!speciesPresent[sp]) {
                     speciesPresent[sp] = true;
                     // cout << "read " << g_SPECIES_NAMES[sp] << endl;
-                }
-                else {
-                    cerr << "Error, a block in the maf file (near line number " << lineNumber 
-                         << ") contains a duplicate species, " << g_SPECIES_NAMES[sp] << endl;
+                } else {
+                    cerr << "Error, a block in the maf file (near line number " << lineNumber
+                         << ") contains a duplicate species: " << g_SPECIES_NAMES[sp]
+                         << ", which is species index: " << sp << endl;
                     exit(EXIT_FAILURE);
                 }
                 if (0 <= sp) {
@@ -215,7 +217,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             }
         }
         if (!containsReference && sum(speciesPresent)) {
-            cerr << "Error, a block in the maf (preceding line number " << lineNumber 
+            cerr << "Error, a block in the maf (preceding line number " << lineNumber
                  << ") fails to contain the reference species." << endl;
             exit(EXIT_FAILURE);
         }
@@ -228,9 +230,9 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
               "new_seq_start=%d\t"
               "new_seq_length=%d\t"
               "old_human=%d\t"
-              "new_human=%d\n", *(seq2->block_score.begin()), chars, seq2->start, 
+              "new_human=%d\n", *(seq2->block_score.begin()), chars, seq2->start,
               seq2->length, seq1->reference, seq2->reference);
-        if (((chars == 0) || (chars + seq1->start == seq2->start)) 
+        if (((chars == 0) || (chars + seq1->start == seq2->start))
             && (seq1->length + seq2->length < g_options.maxBlockSize)
             && (0 < seq2->start)) {
             for (int i = 0; i < seq2->length; i++)
@@ -267,7 +269,7 @@ bool blocks_type::read_from_stream(char* filename) {
                 continue;
             single_block* seq = new single_block;
             while ((ifs) && (buffer[0] == 's')) {
-                int sp = name2species(buffer + 2);
+                int sp = name2speciesInt(buffer + 2);
                 isSuccess = true;
                 if (0 <= sp) {
                     char* str = strtok(buffer, " "); // s
@@ -295,7 +297,7 @@ bool blocks_type::read_from_stream(char* filename) {
                 total_length += seq->length;
             }
         }
-    
+
         return isSuccess;
     } else if (strstr(filename, ".fa")) {
         debug("Reading .fasta file %s\n", filename);
@@ -311,7 +313,7 @@ bool blocks_type::read_from_stream(char* filename) {
                 char* a = strtok(buffer + 1, " ");
                 while(!a)
                     a = strtok(NULL, " ");
-                sp = name2species(a);
+                sp = name2speciesInt(a);
                 seq->length = 0;
             }
             else if (sp>=0) {
@@ -341,7 +343,7 @@ bool blocks_type::read_from_stream(char* filename) {
             }
             char* name = strtok(buffer, " ");
             if (name)
-                sp = name2species(name);
+                sp = name2speciesInt(name);
             if (sp >= 0) {
                 isSuccess = true;
                 if (firstspecies == -1)

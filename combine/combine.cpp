@@ -287,7 +287,7 @@ void read_output_pv(const char* branch_multiplier) {
         double pv;
         char filename[PATH_MAX];
         sprintf(filename, "%s/%s.%d_%s.out", 
-                g_options.SigMAwOutDir, 
+                g_options.SigMAwOutDir,
                 g_options.SigMAwOutPrefix, 
                 sp, branch_multiplier);
         ifstream ifs(filename);
@@ -493,6 +493,8 @@ void usage(void) {
     fprintf(stderr, "  <maf file>: the multiple sequence alignment in maf format.\n");
     fprintf(stderr, "  <SigMA output dir>: the directory where the SigMA output files are located.\n");
     fprintf(stderr, "  <SigMA output prefix>: the prefix of SigMA output file names.\n");
+    fprintf(stderr, "  example:\n");
+    fprintf(stderr, "          $ combine test.maf sigMAout/ myTest.sigma > myOut.out\n");
     fprintf(stderr, "\nDESCRIPTION\n");
     fprintf(stderr, "Given the directory where the SigMA output files are located \n"
             "and the prefix of SigMA output files, the alignment segments \n"
@@ -619,8 +621,6 @@ int parseArgs(int argc, char **argv) {
             break;
         }
         opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
-        // g_options.inputFiles = argv + optind;
-        // g_options.numInputFiles = argc - optind;
     }
     return optind;
 }
@@ -663,14 +663,16 @@ void debug(char const *fmt, ...) {
 int main(int argc, char* argv[]) {
     loadDefaultParameters();
     int n = parseArgs(argc, argv);
-    if (argc - n != 4) {
-        fprintf(stderr, "Error: wrong number of arguments.\n");
+    if (argc - n != 3) {
+        fprintf(stderr, "Error: wrong number of arguments, expected 3.\n");
         usage();
     }
     
     strcpy(g_options.mafFile, argv[n]);
     strcpy(g_options.SigMAwOutDir, argv[n + 1]);
     strcpy(g_options.SigMAwOutPrefix, argv[n + 2]);
+    if (g_options.SigMAwOutDir[strlen(g_options.SigMAwOutDir) - 1] == '/')
+        g_options.SigMAwOutDir[strlen(g_options.SigMAwOutDir) - 1] = '\0';
   
     scan_alignFile();
     cout << "alignmnt length: "<< g_ALIGN_LEN << endl;
@@ -749,9 +751,9 @@ int main(int argc, char* argv[]) {
     }
   
     int **count = new int*[branch_num + 1];
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < branch_num + 1; ++i)
         count[i] = new int[3];
-    for (int sp = 0; sp < branch_num + 1; sp++) {
+    for (int sp = 0; sp < branch_num + 1; ++sp) {
         count[sp][0] = count[sp][1] = count[sp][2] = 0;
         for (int i = 0; i < g_ALIGN_LEN; i++)
             if (sp < branch_num) {

@@ -253,7 +253,7 @@ bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& r
     }
     return false;
 }
-// Identifying good regions  (removed gap_check, because now g_isGaps are counted after outputting good regions)
+// Identifying good regions  (removed gap_check, because now gaps are counted after outputting good regions)
 void output_good_regions(void) {
     int start = -1;
     for (int i = 0; i < g_ALIGN_LEN; i++) {
@@ -268,15 +268,76 @@ void output_good_regions(void) {
                 while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
                     c++;
                 int firstHgCoor = refSpeciesCoord[c];
-	
                 c = start + currLen - 1;
                 while ((refSpeciesCoord[c] == -1) && (c > 0))
                     c--;
                 int lastHgCoor = refSpeciesCoord[c];
-	
                 cout << "my_good_region " << " " << start << " " << currLen <<  " " 
                      << g_refSpeciesChr << " " << firstHgCoor + 1 << " " << lastHgCoor + 1 << endl;
             }
+            start = -1;
+        }
+    }
+}
+void output_bad_regions(int **count) {
+    int start;
+    for (int sp = 0; sp < branch_num; sp++) {
+        start = -1;
+        for (int i = 0; i < g_ALIGN_LEN; i++) {
+            // when current position is a bad one
+            if ((get_PV(i) >= g_options.pvThreshBad) && (isin_WorstSet(i, sp))) {
+                // starting position
+                if (start == -1)
+                    start = i;
+            } else if (start != -1) {
+                // when current position is a good one, output the region before it if the region is long enough.
+                int currLen = i - start;
+                if (currLen >= g_options.minSegSize) {
+                    // count the number of gaps in the region.
+                    int gap_count = 0;
+                    for (int j = start; j < i; j++)
+                        if (get_Gap(j, sp))
+                            gap_count++;
+                    // the first and the last reference coordinates in current region
+                    int c = start;
+                    while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
+                        c++;
+                    int firstHgCoor = refSpeciesCoord[c];
+	  
+                    c = start + currLen - 1;
+                    while ((refSpeciesCoord[c] == -1) && (c > 0))
+                        c--;
+                    int lastHgCoor = refSpeciesCoord[c];
+                    // output
+                    if (gap_count < 0.5 * currLen) {
+                        // ucsc browser coordinate start with 1, refSpeciesCoord + 1
+                        cout << "my_bad_region " << start << " " << sp << " " << currLen 
+                             << " " << g_refSpeciesChr << " " << firstHgCoor + 1 << " " 
+                             << lastHgCoor + 1 << endl; 
+                        count[sp][1] += currLen;
+                        count[sp][2]++;
+                        for (int my_pos = start; my_pos < i; my_pos++) {
+                            // using 'branch_num' in the 'g_isWorstSet' to indicate this position is a bad one.
+                            add_WorstBranch(my_pos, branch_num);
+                        }
+                    }
+                    start = -1;
+                } else {
+                    // reset the starting position, if the region before current good position is not long enough.
+                    start = -1;
+                }
+            }
+        }
+    }
+    // Compute stats for bad positions due to any branch.
+    start = -1;
+    for (int i = 0; i < g_ALIGN_LEN; i++) {
+        if (isin_WorstSet(i, branch_num)) {
+            if (start == -1)
+                start = i;
+        } else if (start != -1) {
+            count[branch_num][1] += i - start;
+            count[branch_num][2]++;
             start = -1;
         }
     }
@@ -783,70 +844,10 @@ int main(int argc, char* argv[]) {
     refSpeciesCoord = new int[g_ALIGN_LEN];
     map_referenceCoordinates();
     cout << "got reference coordinates map" << endl;
-    // Identigying good regions
+    // Identifying good regions
     output_good_regions();
     // Identifying bad regions
-    int start;
-    for (int sp = 0; sp < branch_num; sp++) {
-        start = -1;
-        for (int i = 0; i < g_ALIGN_LEN; i++) {
-            // when current position is a bad one
-            if ((get_PV(i) >= g_options.pvThreshBad) && (isin_WorstSet(i, sp))) {
-                // starting position
-                if (start == -1)
-                    start = i;
-            } else if (start != -1) {
-                // when current position is a good one, output the region before it if the region is long enough.
-                int currLen = i - start;
-                if (currLen >= g_options.minSegSize) {
-                    // count the number of gaps in the region.
-                    int gap_count = 0;
-                    for (int j = start; j < i; j++)
-                        if (get_Gap(j, sp))
-                            gap_count++;
-                    // the first and the last reference coordinates in current region
-                    int c = start;
-                    while ((refSpeciesCoord[c] == -1) && (c < g_ALIGN_LEN - 1))
-                        c++;
-                    int firstHgCoor = refSpeciesCoord[c];
-	  
-                    c = start + currLen - 1;
-                    while ((refSpeciesCoord[c] == -1) && (c > 0))
-                        c--;
-                    int lastHgCoor = refSpeciesCoord[c];
-                    // output
-                    if (gap_count < 0.5 * currLen) {
-                        // ucsc browser coordinate start with 1, refSpeciesCoord + 1
-                        cout << "my_bad_region " << start << " " << sp << " " << currLen 
-                             << " " << g_refSpeciesChr << " " << firstHgCoor + 1 << " " 
-                             << lastHgCoor + 1 << endl; 
-                        count[sp][1] += currLen;
-                        count[sp][2]++;
-                        for (int my_pos = start; my_pos < i; my_pos++) {
-                            // using 'branch_num' in the 'g_isWorstSet' to indicate this position is a bad one.
-                            add_WorstBranch(my_pos, branch_num);
-                        }
-                    }
-                    start = -1;
-                } else {
-                    // reset the starting position, if the region before current good position is not long enough.
-                    start = -1;
-                }
-            }
-        }
-    }
-    // Compute stats for bad positions due to any branch.
-    start = -1;
-    for (int i = 0; i < g_ALIGN_LEN; i++) {
-        if (isin_WorstSet(i, branch_num)) {
-            if (start == -1)
-                start = i;
-        } else if (start != -1) {
-            count[branch_num][1] += i - start;
-            count[branch_num][2]++;
-            start = -1;
-        }
-    }
+    output_bad_regions(count);
     // Output summary
     for (int sp = 0; sp < branch_num + 1; sp++)
         printf("my_count %d %d %d(%4.2f%%) %d\n", sp, count[sp][0], count[sp][1], 

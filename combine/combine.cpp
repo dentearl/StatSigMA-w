@@ -215,7 +215,7 @@ bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& r
     char errorMsg[50] = "# number of sets of parameter computed= 0";
     text[0] = text[2] = '\0';
     ifs.getline(text, 10000);
-    while ((ifs) && (text[2] != 'S')) {
+    while ((ifs) && (strncmp(text + 2, "Seg", 3) != 0)) {
         // if no parameter estimated, abort this file.
         if (strcmp(text, errorMsg) == 0) {
             return false;
@@ -566,6 +566,7 @@ int parseArgs(int argc, char **argv) {
         {"pThreshBad", required_argument, NULL, 0},
         {"pThreshGood", required_argument, NULL, 0},
         
+        {"debug", no_argument, NULL, 'd'},
         {"verbose", no_argument, NULL, 'v'},
         {"help", no_argument, NULL, 'h'},
  
@@ -612,6 +613,9 @@ int parseArgs(int argc, char **argv) {
             }
         case 'v':
             g_options.verbose++;
+            break;
+        case 'd':
+            g_options.debug = 1;
             break;
         case '?':
         case 'h':

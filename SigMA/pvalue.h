@@ -69,8 +69,6 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
                                double& K, double& lambda, double& H) {
     debug("Computing branch parameters for node start number: %d end number: %d\n",
           node->leaf_startnum, node->leaf_endnum);
-    // *(g_options.rseed) += 1299827; // large prime
-    // srand(g_options.rseed);
     int max_score = 10 * kScoreBins;
     int min_score = -10 * kScoreBins;
     double *score_dist = new double[max_score - min_score + 1];
@@ -92,8 +90,8 @@ bool compute_branch_parameters(Tree* node, Tree* parent, const blocks_type& bloc
 
         for (int num = 0; num < num_tuples; ++num) {
             for (int k = 0; k < g_NUM_SPECIES; ++k)
-                list_of_leaves[k]->nucleotide = (static_cast<int>(num / pow(kAlphabetSize, g_NUM_SPECIES - k - 1))) %
-                    (kAlphabetSize) + 1;
+                list_of_leaves[k]->nucleotide = ((static_cast<int>(num / pow(kAlphabetSize, g_NUM_SPECIES - k - 1))) 
+                                                 % (kAlphabetSize) + 1);
             root->compute_prob();
             double ortho_pv = root->return_prob();
             double non_ortho_pv;
@@ -345,8 +343,6 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     double lambda = 0.0011;
     double H = 0.68;
     // compute_branch_parameters(node, parent, blocks, K,lambda, H);
-    // *(g_options.rseed) += 1318699; // large prime
-    // srand(*(g_options.rseed));
     double *K_arr = new double[g_options.totalIterateParam];
     double *lambda_arr = new double[g_options.totalIterateParam];
     double *H_arr = new double[g_options.totalIterateParam];
@@ -390,7 +386,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     // printf("sim_count = %d\n", sim_count);
     delete blocks_param;
     ifs1.close();
-    cout << "# StatSigMAw " << kVersion << " " << timeStamp();
+    cout << "## StatSigMAw " << kVersion << " " << timeStamp();
     cout << "# rseed: " << g_options.rseed << endl;
     cout << "# number of blocks skipped due to missing reference= " << g_NUM_BLOCKS_SKIPPED << endl;
     cout << "# number of sigMA blocks= " << block_count << endl;

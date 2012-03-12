@@ -28,6 +28,7 @@
  *   vol. 28, no. 6, June 2010, 567 - 572.  
  */
 #include <getopt.h>
+#include <limits.h> // PATH_MAX
 #include "global_combine.h"
 #include "tree_combine.h"
 #include "common.h"
@@ -79,7 +80,7 @@ void add_WorstBranch(int i, int sp) {
 bool isin_WorstSet(int i, int sp) {
     return (g_isWorstSet[sp][i]);
 }
-void read_Present() {
+void read_Present(void) {
     // Initialize
     for (int i = 0; i < g_ALIGN_LEN; i++)
         for (int s = 0; s < branch_num; s++)
@@ -137,11 +138,10 @@ void read_Present() {
     delete [] buffer;
     ifs.close();
 }
-void read_Gaps() {
+void read_Gaps(void) {
     for (int i = 0; i < g_ALIGN_LEN; i++)
         for (int s = 0; s < branch_num; s++)
             set_Gap(i, s, false);
-  
     int cur_pos = 0;
     int cur_len = 0;
     char *buffer = new char[g_MAX_BLOCK_SIZE];
@@ -153,6 +153,11 @@ void read_Gaps() {
         for (int i = 0; i < g_MAX_BLOCK_SIZE; i++)
             cur_g_isGaps[s][i] = true;
     ifstream ifs(g_options.mafFile);
+    if (!ifs.is_open()) {
+        cerr << "Error, unable to open maf file " << g_options.mafFile << endl;
+        exit(EXIT_FAILURE);
+    }
+    debug("Opening maf %s for gap reading\n", g_options.mafFile);
     while (ifs) {
         buffer[0]='\0';
         ifs.getline(buffer, g_MAX_BLOCK_SIZE);
@@ -249,14 +254,13 @@ bool read_segment(ifstream &ifs, int& start, int& end, int& left_nearest, int& r
     return false;
 }
 // Identifying good regions  (removed gap_check, because now g_isGaps are counted after outputting good regions)
-void output_good_regions() {
+void output_good_regions(void) {
     int start = -1;
     for (int i = 0; i < g_ALIGN_LEN; i++) {
         if (get_PV(i) < g_options.pvThreshGood) {
             if (start == -1)
                 start = i;
-        }
-        else if (start != -1) {
+        } else if (start != -1) {
             int currLen = i - start;
             if (currLen >= g_options.minSegSize) {
                 // the first and the last reference coordinates in current region                
@@ -281,18 +285,24 @@ void read_output_pv(const char* branch_multiplier) {
     for (int sp = 0; sp < branch_num; sp++) {
         int start, end, left_nearest, right_nearest;
         double pv;
-        char filename[1000];
+        char filename[PATH_MAX];
         sprintf(filename, "%s/%s.%d_%s.out", 
                 g_options.SigMAwOutDir, 
                 g_options.SigMAwOutPrefix, 
                 sp, branch_multiplier);
-        //cout<<filename<<endl;
         ifstream ifs(filename);
-        while (read_segment(ifs, start, end, left_nearest, right_nearest, pv))
-            for (int i = start; i<=end; i++)
+        if (!ifs.is_open()) {
+            cerr << "Error, unable to open file " << filename << endl;
+            exit(EXIT_FAILURE);
+        }
+        debug("Opening file %s for reading.\n", filename);
+        while (read_segment(ifs, start, end, left_nearest, right_nearest, pv)) {
+            for (int i = start; i <= end; i++) {
                 // get the max PValue for all branches
                 if ((get_G_IsPresent(i, sp)) && (get_PV(i) < pv))
                     set_PV(i, pv);
+            }
+        }
         ifs.close();
     }
 }
@@ -308,14 +318,19 @@ void read_output_worstbranch(const char* branch_multiplier) {
     for (int sp = 0; sp < branch_num; sp++) {
         int start, end, left_nearest, right_nearest;
         double pv;
-        char filename[1000];
+        char filename[PATH_MAX];
         sprintf(filename, "%s/%s.%d_%s.out", 
                 g_options.SigMAwOutDir, 
                 g_options.SigMAwOutPrefix, 
                 sp, branch_multiplier);
         ifstream ifs(filename);
+        if (!ifs.is_open()) {
+            cerr << "Error, unable to open file " << filename << endl;
+            exit(EXIT_FAILURE);
+        }
+        debug("Opening file %s for reading the worst branch.\n", filename);
         while (read_segment(ifs, start, end, left_nearest, right_nearest, pv))
-            for (int i = start; i<=end; i++) {
+            for (int i = start; i <= end; i++) {
                 // when the branch is g_isPresent at the position, 
                 // the pvalue of the branch equals to min(max pvalue), 
                 // and current tree is the reponsible tree for such pvalue.
@@ -332,12 +347,17 @@ void read_pv_dist(char* branch_multiplier, int sp) {
     int total = 0;
     int start, end, left_nearest, right_nearest;
     double pv;
-    char filename[1000];
+    char filename[PATH_MAX];
     sprintf(filename, "%s/%s.%d_%s.out", 
             g_options.SigMAwOutDir, 
             g_options.SigMAwOutPrefix, 
             sp, branch_multiplier);
     ifstream ifs(filename);
+    if (!ifs.is_open()) {
+        cerr << "Error, unable to open file " << filename << endl;
+        exit(EXIT_FAILURE);
+    }
+    debug("Opening file %s for reading pv_dist.\n", filename);
     while (read_segment(ifs, start, end, left_nearest, right_nearest, pv))
         if (end - start >= 0) {
             int total_start_end = 0;
@@ -355,7 +375,7 @@ void read_pv_dist(char* branch_multiplier, int sp) {
         cout << "my_pv " << sp << " " << i << " " << pv_dist[i]/float(total) 
              << " " << pv_dist[i] << endl; 
 }
-void scan_alignFile() {
+void scan_alignFile(void) {
     g_ALIGN_LEN = 0;
     int cur_len = 0;
     char *buffer = new char[g_MAX_BLOCK_SIZE];
@@ -363,14 +383,18 @@ void scan_alignFile() {
     int currStart = 0;
     int currNtNum = 0;
     ifstream ifs(g_options.mafFile);
+    if (!ifs.is_open()) {
+        cerr << "Error, unable to open file " << g_options.mafFile << endl;
+        exit(EXIT_FAILURE);
+    }
+    debug("Opening alignment file %s for scanning.\n", g_options.mafFile);
     while (ifs) {
         buffer[0]='\0';
         ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8)==0) || (!ifs)) {
             g_ALIGN_LEN += cur_len;
             cur_len = 0;
-        }
-        else {
+        } else {
             char* a;
             if (buffer[0]=='s') {
                 // Checking for reference
@@ -399,7 +423,7 @@ void scan_alignFile() {
     ifs.close();
     delete [] buffer;
 }
-void map_referenceCoordinates() {
+void map_referenceCoordinates(void) {
     int cumStart = 0;
     int cur_len = 0;
     char *buffer = new char[g_MAX_BLOCK_SIZE];
@@ -408,14 +432,18 @@ void map_referenceCoordinates() {
     int currHgPos = 0;
     int chrLen = 0;
     ifstream ifs(g_options.mafFile);
+    if (!ifs.is_open()) {
+        cerr << "Error, unable to open file " << g_options.mafFile << endl;
+        exit(EXIT_FAILURE);
+    }
+    debug("Opening maf file %s for reading reference coordinates.\n", g_options.mafFile);
     while (ifs) {
         buffer[0] = '\0';
         ifs.getline(buffer, g_MAX_BLOCK_SIZE);
         if ((strncmp(buffer, "a score=", 8) == 0) || (!ifs)) {
             cumStart += cur_len;
             cur_len = 0;
-        }
-        else {
+        } else {
             char* a;
             if (buffer[0]=='s') {
                 // Checking for reference
@@ -729,8 +757,7 @@ int main(int argc, char* argv[]) {
             if (sp < branch_num) {
                 if (get_G_IsPresent(i, sp))
                     count[sp][0]++;
-            }
-            else {
+            } else {
                 if (!is_NoneG_IsPresent(i)) 
                     count[sp][0]++;
             }
@@ -762,9 +789,8 @@ int main(int argc, char* argv[]) {
                 // starting position
                 if (start == -1)
                     start = i;
-            }
-            // when current position is a good one, output the region before it if the region is long enough.
-            else if (start != -1) {
+            } else if (start != -1) {
+                // when current position is a good one, output the region before it if the region is long enough.
                 int currLen = i - start;
                 if (currLen >= g_options.minSegSize) {
                     // count the number of gaps in the region.
@@ -796,10 +822,10 @@ int main(int argc, char* argv[]) {
                         }
                     }
                     start = -1;
-                }
-                // reset the starting position, if the region before current good position is not long enough.
-                else
+                } else {
+                    // reset the starting position, if the region before current good position is not long enough.
                     start = -1;
+                }
             }
         }
     }
@@ -809,8 +835,7 @@ int main(int argc, char* argv[]) {
         if (isin_WorstSet(i, branch_num)) {
             if (start == -1)
                 start = i;
-        }
-        else if (start != -1) {
+        } else if (start != -1) {
             count[branch_num][1] += i - start;
             count[branch_num][2]++;
             start = -1;

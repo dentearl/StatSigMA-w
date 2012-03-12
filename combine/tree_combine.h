@@ -40,6 +40,8 @@ int species_num;
 char **species_name;
 
 int name2branch(char* name) { 
+    // given a name, name2branch looks through the global species_name array
+    // and returns the integer value associated with that branch.
     for (int i = 0; i < branch_num; i++)
         if ((strlen(species_name[i]) > 1) 
             && (strncmp(name, species_name[i], strlen(species_name[i])) == 0))
@@ -302,7 +304,6 @@ bool is_OnPathToReference(int leaf, int edge) {
         if (path1[i] == e) return true;
     return false;
 }
-
 void insert_inner_branches(bool *cur_sp) {
     // Initialize
     root->init_present();
@@ -374,7 +375,6 @@ void insert_inner_branches(bool *cur_sp) {
         if (list_of_branches[s]->is_both_present)
             cur_sp[s] = true; 
 }
-
 void check_gapped_branches(bool *cur_sp) {
     // Initialize
     root->init_present();

@@ -31,12 +31,13 @@
 #define GLOBAL_COMBINE_H_
 
 #include <stdlib.h>
-#include <fstream>
-#include <iostream>
-#include <iomanip>
+#include <limits.h> // PATH_MAX
 #include <math.h>
 #include <assert.h>
 #include <string.h>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -59,8 +60,8 @@ struct globalOptions_t{
     int printAll;
     bool debug;
 };
-struct globalOptions_t g_options = {50, 0.1, 1e-10, new char[100],
-                                    new char[100], new char[20],
+struct globalOptions_t g_options = {50, 0.1, 1e-10, new char[PATH_MAX],
+                                    new char[PATH_MAX], new char[128],
                                     new char[kMaxLengthNewick], 
                                     new char[kMaxLengthRefSpecies], 0, 0, false};
 

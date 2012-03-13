@@ -406,6 +406,7 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
     delete [] K_arr;
     delete [] lambda_arr;
     delete [] H_arr;
+    // do not change the format of this next out line, it is exactly checked for in combine.cpp
     cout << "# number of sets of parameter computed= " << sim_count << endl;
     int cur_seg = 0;
     ifstream ifs(mafFile); // reset mafFile
@@ -749,17 +750,18 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
             ++cur_best_index;
         } while (cur_best_index < cur_seg);
     }
-    cout << "# num_segments = " << cur_seg << endl;
+    cout << "# num_segments= " << cur_seg << endl;
     cout << "# XXXXX num\tblock_num\tblock_score\tscore start\tend\tpvalue 1\t"
          << "nearest_left\tnearest_right\tleft_end\tright_end\tpvalue 2\talign_start\talign_end" << endl;
     int grandtotal = 0;
     int prev_good = 0;
+    int minus_one = -1;
     for (int i = 0; i < cur_seg; ++i) {
         // Before first
         if ((i == 0) && (all_seg[i].align_start != 0)) {
             cout << "# Seg_fis " << i << "\t" << all_seg[i].block_num << "\t"
                  << all_seg[i].block_score << "\t" << all_seg[i].score << "\t" << 0 << "\t"
-                 << all_seg[i].start - 1 << "\t" << "1" << "\t" << "-1" << "\t";
+                 << all_seg[i].start - 1 << "\t" << "1" << "\t" << minus_one << "\t";
 
             if (all_seg[i].nearest_right == -1)
                 cout << all_seg[i].start;
@@ -805,9 +807,9 @@ double compute_pvalue_branch(Tree* node, Tree* parent, blocks_type& blocks, char
                  << all_seg[i].block_score << "\t" << all_seg[i].score << "\t"
                  << all_seg[i].end + 1 << "\t" << g_CHR_START + g_CHR_LEN - 1 << "\t" << "1" << "\t";
             if (all_seg[i].nearest_left == -1)
-                cout << all_seg[i].end - g_CHR_LEN << "\t - 1";
+                cout << all_seg[i].end - g_CHR_LEN << "\t" << minus_one;
             else
-                cout << all_seg[i].nearest_left << "\t - 1";
+                cout << all_seg[i].nearest_left << "\t" << minus_one;
             cout << "\t" << "-\t" << "-\t" << "-\t";
             cout << all_seg[i].align_end + 1 << "\t" << g_ALIGN_LEN - 1 <<endl;
         }

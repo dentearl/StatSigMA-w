@@ -74,7 +74,7 @@ void usage(void) {
             "This will print out the branch number and names of all species in the tree.\n");
 
     fprintf(stderr, "\nOPTIONS\n");
-    fprintf(stderr, "   --phylogeny       input phylogeny in newick format. default = %s\n", 
+    fprintf(stderr, "   --phylogeny       input phylogeny in newick format. default=%s\n", 
             g_options.phylogeny);
     fprintf(stderr, "   --printAll        print every branch in the tree.\n");
     exit(EXIT_FAILURE);
@@ -84,7 +84,6 @@ int parseArgs(int argc, char **argv) {
     static const char *optString = "vh?";
     static const struct option longOpts[] = {
         {"phylogeny", required_argument, NULL, 0},
-        {"refSpecies", required_argument, NULL, 0},
         {"printAll", no_argument, NULL, 0},
         {"verbose", no_argument, NULL, 'v'},
         {"help", no_argument, NULL, 'h'},

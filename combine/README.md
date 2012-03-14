@@ -15,9 +15,11 @@ NOTICE: This program assumes that SigMA has been run on the combinations of ALL 
 ### Usage
     combine <maf file> <SigMA output dir> <SigMA output prefix> [options]
 
-* <maf file>: the multiple sequence alignment in maf format.
-* <SigMA output dir>: the directory where the SigMA output files are located.
-* <SigMA output prefix>: the prefix of SigMA output file names.
+    maf file: the multiple sequence alignment in maf format.
+    SigMA output dir: the directory where the SigMA output files are located.
+    SigMA output prefix: the prefix of SigMA output file names. 
+
+    Options
     -h, --help                prints a help message and exits
     --phylogeny=PHYLOGENY     phylogeny in newick format default=(((((((((((((hg:0.006690,chimp:0.007571):0.024272,
                               (colobus_monkey:0.015404,(baboon:0.008258,macaque:0.028617):0.008519):0.022120)
@@ -38,41 +40,35 @@ NOTICE: This program assumes that SigMA has been run on the combinations of ALL 
     --pThreshGood=PTHRESHGOOD specifies the p-value threshold for good regions. Every position 
                               in a good region has a p-value less than the specified value.
                               default=1e-10
+</code>
 
 ### Output
-The program generates the output to stdout. The output consists of three parts:
-a) Regions that are well aligned with respect to ALL branches. The format of this part of output is:
-- my_good_region (simply a flag) 
-- start position of this region (in the alignment coordinate, i.e. which column in the alignment is this position)
-- length of this region
-- chromosome
-- start position 
-- end position
+The program generates the output to stdout. The output consists of three parts: 
 
-The last three items show the genomic coordinates of the reference species for this region.
+1. Regions that are well aligned with respect to ALL branches. The last three items show the genomic coordinates of the reference species for this region. The format of this part of output is:
+ * my_good_region (simply a flag) 
+ * start position of this region (in the alignment coordinate, i.e. which column in the alignment is this position)
+ * length of this region
+ * chromosome
+ * start position 
+ * end position 
 
-b) Regions that are suspiciously aligned w.r.t. a branch. The format of this part of output is:
-- my_bad_region (simply a flag) 
-- start position of this region (in the alignment coordinate, i.e. which column in the alignment is this position)
-- branch index (the region is suspiciously aligned with respect to this particular branch)
-- length of this region
-- chromosome
-- start position 
-- end position
+2. Regions that are suspiciously aligned w.r.t. a branch. Again, the last three items show the genomic coordinates of the reference species for this region. Note: For regions that are suspiciously aligned with respect to a branch incident on a leaf (i.e., a species), you can read them as regions where that species is suspiciously aligned to the other species. The format of this part of output is:
+ * my_bad_region (simply a flag) 
+ * start position of this region (in the alignment coordinate, i.e. which column in the alignment is this position)
+ * branch index (the region is suspiciously aligned with respect to this particular branch)
+ * length of this region
+ * chromosome
+ * start position 
+ * end position 
 
-Again, the last three items show the genomic coordinates of the reference species for this region.
-
-Note: For regions that are suspiciously aligned with respect to a branch incident on a leaf (i.e., a species), you can read them as regions where that species is suspiciously aligned to the other species.
-
-c) Statistics for suspiciously-aligned regions. The format of this part of output is:
-- my_count (simply a flag)
-- branch index
-- number of aligned bases w.r.t. the branch
-- number of suspiciously aligned bases w.r.t. the branch
-- % of suspiciously aligned bases w.r.t. the branch
-- number of suspiciously aligned regions w.r.t. the branch
-
-NOTICE: Please refer to parameters.txt for parameter settings of well- or suspiciously-aligned regions.
+3. Statistics for suspiciously-aligned regions. NOTICE: Please refer to parameters.txt for parameter settings of well- or suspiciously-aligned regions. The format of this part of output is:
+ * my_count (simply a flag)
+ * branch index
+ * number of aligned bases w.r.t. the branch
+ * number of suspiciously aligned bases w.r.t. the branch
+ * % of suspiciously aligned bases w.r.t. the branch
+ * number of suspiciously aligned regions w.r.t. the branch 
 
 ## getSpeciesName
 ### Function

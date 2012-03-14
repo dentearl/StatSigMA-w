@@ -40,7 +40,6 @@ NOTICE: This program assumes that SigMA has been run on the combinations of ALL 
     --pThreshGood=PTHRESHGOOD specifies the p-value threshold for good regions. Every position 
                               in a good region has a p-value less than the specified value.
                               default=1e-10
-</code>
 
 ### Output
 The program generates the output to stdout. The output consists of three parts: 

@@ -21,7 +21,7 @@ I. SigMA
 3) Output:
    The program generates the output to stdout, which includes information about identifed alignment segments, such as p-values.
 
-   The stdout should be REDIRECTED to a file whose PREFIX has to be "<branch index>_<branch multiplier>.out".
+   The stdout should be REDIRECTED to a file whose SUFFIX has to be "<branch index>_<branch multiplier>.out".
 
 
 4) Example:

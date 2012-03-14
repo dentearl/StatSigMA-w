@@ -49,7 +49,7 @@ NOTICE: We need to run SigMA on the combinations of ALL possible branches of the
 ### Output
 The program generates the output to stdout, which includes information about identifed alignment segments, such as p-values. 
 
-   The stdout should be REDIRECTED to a file whose PREFIX has to be "<branch index>_<branch multiplier>.out".
+   The stdout should be REDIRECTED to a file whose SUFFIX has to be "branchIndex_branchMultiplier.out".
 
 ### Example
     SigMA  myAlign.maf  6  0.01  >  myOutDir/myPrefix.6_0.01.out 

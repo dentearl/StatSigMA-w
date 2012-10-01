@@ -45,9 +45,9 @@ The computer on which we ran these two examples has a 2.33GHz CPU and a 4G memeo
 
 ## VI. Conditions of Use
 
-Xiaoyu Chen, Amol Prakash, and Martin Tompa give permission for Dent Earl and his institution to use the StatSigmMA-w software developed at the University of Washington for research purposes, on the following conditions:
+Xiaoyu Chen, Amol Prakash, and [Martin Tompa](http://www.cs.washington.edu/homes/tompa/) give permission for [Dent Earl](https://github.com/dentearl/) and [his institution](http://www.cbse.ucsc.edu) to use the StatSigmMA-w software developed at the University of Washington for research purposes, on the following conditions:
 
-1. [Dent Earl](https://github.com/dentearl/) and his institutional colleagues may modify the StatSigmMA-w software and distribute the resulting modified software for research purposes, provided (a) that it is distributed together with these Conditions of Use, (b) that Martin Tompa receive a copy of the finalized modified software, and (c) that Xiaoyu Chen, Amol Prakash, and Martin Tompa are credited with the authorship of the software.
+1. [Dent Earl](https://github.com/dentearl/) and his institutional colleagues may modify the StatSigmMA-w software and distribute the resulting modified software for research purposes, provided (a) that it is distributed together with these Conditions of Use, (b) that [Martin Tompa](http://www.cs.washington.edu/homes/tompa/) receive a copy of the finalized modified software, and (c) that Xiaoyu Chen, Amol Prakash, and [Martin Tompa](http://www.cs.washington.edu/homes/tompa/) are credited with the authorship of the software.
 
 2. The StatSigmMA-w software will be used by you and/or your institution solely for noncommercial purposes, except with express permission from the authors.
 

@@ -181,6 +181,11 @@ Tree* read_tree(char newick_format[], int& sp_num, int& pos) {
             pos++;
             verifyNewickBounds(pos);
         }
+        if (pos - start_pos > kMaxSpeciesNameLength) {
+            fprintf(stderr, "Error, failure in reading newick, (species name has length %d) > "
+                    "(kMaxSpeciesNameLength = %d)\n", pos - start_pos, kMaxLengthMessage);
+            exit(EXIT_FAILURE);
+        }
         strncpy(g_SPECIES_NAMES[sp_num], newick_format + start_pos, pos - start_pos);
         g_SPECIES_NAMES[sp_num][pos - start_pos] = '\0';
         Tree* node = new Tree(sp_num, g_SPECIES_NAMES[sp_num]);
@@ -196,7 +201,7 @@ void reportSpeciesNames(void) {
         debug("stored name: %s\n", g_SPECIES_NAMES[i]);
     }
 }
-void generate_and_read_newick_tree() {
+void generate_and_read_newick_tree(void) {
     int pos = 0;
     g_NUM_SPECIES = 0;
     root = read_tree(g_options.phylogeny, g_NUM_SPECIES, pos);

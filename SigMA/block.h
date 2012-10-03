@@ -45,9 +45,16 @@ using namespace std;
 using namespace __gnu_cxx;
 
 int name2speciesInt(char *name) {
-    for (int i = 0; i < g_NUM_SPECIES; i++)
-        if (strncmp(name, g_SPECIES_NAMES[i], strlen(g_SPECIES_NAMES[i])) == 0)
+    // take a char* and return the index in g_SPECIES_NAMES that maches, if any
+    // return -1 if no match.
+    for (int i = 0; i < g_NUM_SPECIES; ++i) {
+        if (strncmp(name, g_SPECIES_NAMES[i], strlen(g_SPECIES_NAMES[i])) == 0) {
+            // note that g_SPECIES_NAMES is populated from the newick, so using the length
+            // is important as the maf species name field will likely contain chromosome
+            // extensions
             return i;
+        }
+    }
     return -1;
 }
 int sum(bool *a) {
@@ -86,12 +93,12 @@ class single_block {
 class blocks_type {
  public:
     vector<single_block*> chain;
-    int total_length;
+    int totalLength;
     bool containsReference;
     unsigned lineNumber; // line number within the maf
     unsigned currentPosition; // current position on the reference species chromosome
     blocks_type() {
-        total_length = 0;
+        totalLength = 0;
         containsReference = false;
         lineNumber = 0;
     }
@@ -122,7 +129,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         seq1->start = seq2->start;
         seq1->reference = seq2->reference;
     }
-    total_length = g_CHR_LEN; // Every time make block_length = chr_len (used to compute statistics)
+    totalLength = g_CHR_LEN; // Every time make block_length = chr_len (used to compute statistics)
     size_t bufferLen = g_options.maxBlockSize + kMinLineLength;
     char *buffer = new char[bufferLen];
     buffer[0] = '\0';
@@ -166,9 +173,11 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         bool *speciesPresent = new bool[g_NUM_SPECIES]();
         while ((ifs) && (buffer[0] != 'a')) {
             if (buffer[0] == 's') {
-                int sp = name2speciesInt(buffer + 2);
-                if (sp == -1)
+                int sp = name2speciesInt(buffer + 2); // ptr offset
+                if (sp == -1) {
+                    buffer[0] = '\0'; // throw this line away, it does not contain a sequence from the newick
                     continue;
+                }
                 if (!speciesPresent[sp]) {
                     speciesPresent[sp] = true;
                     // cout << "read " << g_SPECIES_NAMES[sp] << endl;
@@ -209,8 +218,9 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             // record the position of pointer
             pos = ifs.tellg();
             ifs.getline(buffer, bufferLen);
-            if (buffer[strlen(buffer)] == '\n')
+            if (buffer[strlen(buffer)] == '\n') {
                 ++lineNumber;
+            }
             if (ifs.fail() && !ifs.eof()) {
                 cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
                 exit(EXIT_FAILURE);
@@ -269,7 +279,7 @@ bool blocks_type::read_from_stream(char* filename) {
                 continue;
             single_block* seq = new single_block;
             while ((ifs) && (buffer[0] == 's')) {
-                int sp = name2speciesInt(buffer + 2);
+                int sp = name2speciesInt(buffer + 2); // ptr offset
                 isSuccess = true;
                 if (0 <= sp) {
                     char* str = strtok(buffer, " "); // s
@@ -294,10 +304,9 @@ bool blocks_type::read_from_stream(char* filename) {
             }
             if (0 < seq->length) {
                 chain.push_back(seq);
-                total_length += seq->length;
+                totalLength += seq->length;
             }
         }
-
         return isSuccess;
     } else if (strstr(filename, ".fa")) {
         debug("Reading .fasta file %s\n", filename);
@@ -326,7 +335,7 @@ bool blocks_type::read_from_stream(char* filename) {
         }
         if (seq->length > 0) {
             chain.push_back(seq);
-            total_length += seq->length;
+            totalLength += seq->length;
         }
         return isSuccess;
     } else if (strstr(filename, ".msf")) {
@@ -363,7 +372,7 @@ bool blocks_type::read_from_stream(char* filename) {
         seq->length += cur_length;
         if (seq->length > 0) {
             chain.push_back(seq);
-            total_length += seq->length;
+            totalLength += seq->length;
         }
         return isSuccess;
     } else {

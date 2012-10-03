@@ -86,8 +86,9 @@ const float kMaxBranchLength = 10000;
 // Divide by length; this value is added to each score unit
 const int kMaxNumberBranches = 1000; // largest number of branches allowed in a tree
 
+const int kMaxSpeciesNameLength = 255;
 int g_NUM_SPECIES = kMaxNumberBranches;
-char g_SPECIES_NAMES[kMaxNumberBranches][32];
+char g_SPECIES_NAMES[kMaxNumberBranches][kMaxSpeciesNameLength + 1];
 double** g_MULTI_PV;
 int g_NUM_BLOCKS_SKIPPED = 0; // count of blocks skipped due to missing reference
 

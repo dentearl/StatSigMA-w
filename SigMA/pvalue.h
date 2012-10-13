@@ -407,7 +407,7 @@ double compute_pvalue_branch(Tree *node, Tree *parent, blocks_type &blocks, char
     }
     if (sim_count == 0) {
         cerr << "Warning, sim_count == 0, no reference found in maf block?" << endl;
-        cerr << "Last read line number was " << lineNumber << endl;
+        cerr << "Last read line number was " << lineNumber - 1 << endl;
         // exit(EXIT_FAILURE);
     }
     K = K_arr[0] / sim_count;

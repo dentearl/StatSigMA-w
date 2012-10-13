@@ -60,8 +60,9 @@ int name2speciesInt(char *name) {
 int sum(bool *a) {
     // take an array of bools and return the sum of their values.
     int s = 0;
-    for (unsigned i = 0; i < sizeof(a) / sizeof(a[0]); ++i)
+    for (unsigned i = 0; i < sizeof(a) / sizeof(a[0]); ++i) {
         s += a[i];
+    }
     return s;
 }
 class single_block {
@@ -120,35 +121,41 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
     } else {
         seq1 = chain[0];
         seq2 = chain[1];
-        for (int i = 0; i < g_options.maxBlockSize; i++)
-            for (int j = 0; j < g_NUM_SPECIES; j++)
+        for (int i = 0; i < g_options.maxBlockSize; i++) {
+            for (int j = 0; j < g_NUM_SPECIES; j++) {
                 seq1->block[i][j] = seq2->block[i][j];
+            }
+        }
         seq1->align_start += seq1->length;
         seq1->length = seq2->length;
         seq1->block_score = seq2->block_score;
         seq1->start = seq2->start;
         seq1->reference = seq2->reference;
     }
-    totalLength = g_CHR_LEN; // Every time make block_length = chr_len (used to compute statistics)
+    totalLength = g_CHR_LEN; // Every time make block_length = g_CHR_LEN (used to compute statistics)
     size_t bufferLen = g_options.maxBlockSize + kMinLineLength;
     char *buffer = new char[bufferLen];
     buffer[0] = '\0';
     bool isSuccess = false;
     int pos = -1;
     do {
-        for (int i = 0; i < g_options.maxBlockSize; i++)
-            for (int j = 0; j < g_NUM_SPECIES; j++)
+        for (int i = 0; i < g_options.maxBlockSize; i++) {
+            for (int j = 0; j < g_NUM_SPECIES; j++) {
                 seq2->block[i][j] = kRandom;
+            }
+        }
         seq2->reference = -1;
         seq2->length = 0;
         seq2->start = 0;
+        // advance to the '^a' line
         while (ifs && (buffer[0] != 'a')) {
             buffer[0] = '\0';
             ifs.getline(buffer, bufferLen);
-            if (buffer[strlen(buffer) + 1] == '\n')
-                ++lineNumber;
-            if (strlen(buffer) == bufferLen - 1)
-                printf("total bs, %lu\n", bufferLen - 1);
+            ++lineNumber;
+            if (strlen(buffer) == bufferLen - 1) {
+                cerr << "This is a problem, buffer is full " << bufferLen - 1 << endl;
+                exit(EXIT_FAILURE);
+            }
             if (ifs.fail() && !ifs.eof()) {
                 cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
                 exit(EXIT_FAILURE);
@@ -162,17 +169,16 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         }
         buffer[0] = '\0';
         ifs.getline(buffer, bufferLen);
-        if (buffer[strlen(buffer)] == '\n')
-            ++lineNumber;
+        ++lineNumber;
         if (ifs.fail() && !ifs.eof()) {
             cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
             exit(EXIT_FAILURE);
         }
-
         containsReference = false;
         bool *speciesPresent = new bool[g_NUM_SPECIES]();
         while ((ifs) && (buffer[0] != 'a')) {
             if (buffer[0] == 's') {
+                // sequence line business
                 int sp = name2speciesInt(buffer + 2); // ptr offset
                 if (sp == -1) {
                     buffer[0] = '\0'; // throw this line away, it does not contain a sequence from the newick
@@ -199,8 +205,9 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
                         isSuccess = true;
                         if (seq2->start < seq1->start + seq1->length) {
                             cerr << "Error, detected a block where the reference either "
-                                "contains a duplicated position or is out of order near line "
-                                "number " << lineNumber << endl;
+                                "contains a duplicated position, or is out of order, near line "
+                                "number " << lineNumber << ". Prev: " << seq1->start + seq1->length <<
+                                ", vs current: " << seq2->start << endl;
                             exit(EXIT_FAILURE);
                         }
                     }
@@ -218,9 +225,7 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             // record the position of pointer
             pos = ifs.tellg();
             ifs.getline(buffer, bufferLen);
-            if (buffer[strlen(buffer)] == '\n') {
-                ++lineNumber;
-            }
+            ++lineNumber;
             if (ifs.fail() && !ifs.eof()) {
                 cerr << "Error, failbit has been set while reading line number " << lineNumber << endl;
                 exit(EXIT_FAILURE);
@@ -232,22 +237,31 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
             exit(EXIT_FAILURE);
         }
         int chars = 0;
-        for (int i = 0; i < seq1->length; i++)
-            if ((seq1->reference != -1) && (seq1->block[i][seq1->reference] != kGap))
+        for (int i = 0; i < seq1->length; i++) {
+            if ((seq1->reference != -1) && (seq1->block[i][seq1->reference] != kGap)) {
                 chars++;
+            }
+        }
         debug("Reading sc=%d\t"
               "old_non_gap_char=%d\t"
               "new_seq_start=%d\t"
               "new_seq_length=%d\t"
-              "old_human=%d\t"
-              "new_human=%d\n", *(seq2->block_score.begin()), chars, seq2->start,
-              seq2->length, seq1->reference, seq2->reference);
+              "old_ref=%d\t"
+              "new_ref=%d\n", 
+              *(seq2->block_score.begin()), 
+              chars, 
+              seq2->start,
+              seq2->length, 
+              seq1->reference, 
+              seq2->reference);
         if (((chars == 0) || (chars + seq1->start == seq2->start))
             && (seq1->length + seq2->length < g_options.maxBlockSize)
             && (0 < seq2->start)) {
-            for (int i = 0; i < seq2->length; i++)
-                for (int j = 0; j < g_NUM_SPECIES; j++)
+            for (int i = 0; i < seq2->length; i++) {
+                for (int j = 0; j < g_NUM_SPECIES; j++) {
                     seq1->block[i + seq1->length][j] = seq2->block[i][j];
+                }
+            }
             seq1->length += seq2->length;
             seq1->block_score.push_back(*(seq2->block_score.begin()));
             seq1->reference = seq2->reference;
@@ -258,9 +272,10 @@ bool blocks_type::read_single_from_maf(ifstream& ifs) {
         }
     } while (ifs && (seq2->length == 0));
     if (ifs && (pos != -1)) {
-        // reset the pointer back a line (starting with 'a')
+        // reset the pointer back one line (starting with 'a')
         // get ready for reading the next SigMA block
         ifs.seekg(pos);
+        --lineNumber;
     }
     return isSuccess;
 }
@@ -380,7 +395,6 @@ bool blocks_type::read_from_stream(char* filename) {
         exit(EXIT_FAILURE);
     }
 }
-
 
 #endif // BLOCK_H_
 

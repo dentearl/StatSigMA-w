@@ -33,7 +33,9 @@
 
 const int kMaxIterations = 500;       /* Maximum number of iterations used in calculating K */
 
-char* timeStamp() {
+char* timeStamp(void) {
+    // return a string (newline terminated) with the time stamp formatted as in:
+    // Fri Oct 12 17:51:05 2012
     time_t rawTime;
     struct tm *timeStr;
     time (&rawTime);
@@ -41,6 +43,7 @@ char* timeStamp() {
     return asctime(timeStr);
 }
 int gcd(int a, int b) {
+    // greatest common divison
     int c;
     if (b < 0) 
         b = -b;
@@ -59,10 +62,11 @@ int gcd(int a, int b) {
 }
 
 int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) {
+    // calculate the Karlin-Altshul score. returns 1 on success, 0 on failure.
     int i, j, range, lo, hi;
     double up, neww, sum, Sum, av;
     double *p, *P, *ptrP, *ptr1;
-    /* Check that scores and their associated probabilities are valid     */
+    // Check that scores and their associated probabilities are valid
     debug("Start Karlin: low=%d high=%d\n", low, high);
     debug("%s", timeStamp());
     if (0 <= low) {
@@ -131,23 +135,28 @@ int karlin(int low, int high, double* pr, double* lambda, double* K, double* H) 
     Sum = lo = hi = 0;
     P = new double[kMaxIterations * range + 1];
 	//////////////////////////////////////////////////////////////////
-	for (i = 0; i < kMaxIterations * range + 1; i++)
+	for (i = 0; i < kMaxIterations * range + 1; i++) {
         P[i] = 0;
+    }
     for (*P = sum = j = 1; j <= kMaxIterations && sum > 0.0001; Sum += sum /= j++) {
 		ptrP = P;
-		for (int jj = hi - low; jj >= 0;jj--) {
+		for (int jj = hi - low; jj >= 0; jj--) {
             double mm = ptrP[jj];
             if (mm > 0) {
                 ptrP[jj] = 0;
-                for (int kk = 0; kk < num_sparse; kk++)
+                for (int kk = 0; kk < num_sparse; kk++) {
                     ptrP[jj + sc_sparse[kk]] += mm * p_sparse[kk];
+                }
             }
         }
 		hi += high;
 		lo += low;
-        for (sum = 0, i = lo; i; ++i) 
+        for (sum = 0, i = lo; i; ++i)  {
             sum += *++ptrP * exp((*lambda) * i);
-        for ( ; i <= hi; ++i) sum += *++ptrP;
+        }
+        for ( ; i <= hi; ++i) {
+            sum += *++ptrP;
+        }
     }
     debug("Finished loop3, number of iterations=%d\n", j);
     debug("%s", timeStamp());
